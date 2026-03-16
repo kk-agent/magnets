@@ -1,0 +1,216 @@
+# Magnets — Full Phased Build Plan
+
+**Repo:** https://github.com/kk-agent/magnets
+**Local:** ~/.openclaw/workspace/projects/magnets/
+**Build target:** iPhone 17 Pro Simulator (iOS 26.2)
+**Build command:** `xcodebuild -scheme Magnets -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`
+
+---
+
+## ✅ Phase 1 — Foundation (COMPLETE)
+*Build verified: compiles clean on Xcode 26.3 / iOS 26.2 simulator*
+
+- [x] Xcode project with 2 targets (Magnets app + MagnetsWidget extension)
+- [x] SwiftData models: Magnet, Post, MagnetMember
+- [x] Shared App Group container (`group.com.magnets.shared`)
+- [x] HomeView — magnet list with hero card, empty state, magnet cards
+- [x] MagnetDetailView — post feed with text input + photo picker
+- [x] CreateMagnetView — name input + color selection
+- [x] PostRowView — colored cards with timestamps
+- [x] SettingsView — placeholder
+- [x] Widget extension: Small/Medium/Large views
+- [x] TimelineProvider reading from shared container
+- [x] WidgetPushHandler stub
+- [x] Color palette system (MagnetPalette)
+- [x] SharedMediaStore for photo persistence
+- [x] Color(hex:) extension
+- [x] GitHub repo + CI workflows + Copilot agent config
+- [x] `xcodebuild build` — **BUILD SUCCEEDED**
+
+### Phase 1 Self-Check Results
+| Check | Result |
+|-------|--------|
+| All 17 Swift files compile | ✅ |
+| App target builds | ✅ |
+| Widget extension builds + embeds | ✅ |
+| Code signing (simulator) | ✅ |
+| Asset catalog processes | ✅ |
+| No warnings (besides expected App Intents) | ✅ |
+
+---
+
+## 🔧 Phase 2 — Push, Sharing & CloudKit
+*Goal: Real-time widget updates + multi-user magnets*
+
+### 2A — WidgetPushHandler (APNs)
+- [ ] Implement `WidgetPushHandler` protocol properly
+  - `pushTokenDidChange` — send token to CloudKit
+  - Register push handler on widget configuration
+- [ ] Add Push Notification entitlement to widget extension
+- [ ] Server-side push: Edge Function to send APNs requests
+- [ ] Test: post in app → widget updates within seconds
+- [ ] **BUILD + TEST before moving on**
+
+### 2B — CloudKit Integration
+- [ ] Enable CloudKit on both targets (app + widget)
+- [ ] Create CloudKit container: `iCloud.com.groupthinking.magnets`
+- [ ] Mark SwiftData models as CloudKit-compatible
+  - Remove any non-CloudKit-friendly types
+  - Ensure all relationships are optional or have defaults
+- [ ] Verify sync between devices (simulator + physical device)
+- [ ] **BUILD + TEST**
+
+### 2C — Sharing & Invites
+- [ ] Universal Links for invite codes (`magnets://join/<code>`)
+- [ ] QR code generation for invite sharing
+- [ ] Join flow: scan QR / tap link → add member to magnet
+- [ ] CloudKit sharing: `CKShare` for magnet access control
+- [ ] Invite sheet UI in MagnetDetailView
+- [ ] **BUILD + TEST**
+
+### 2D — Interactive Widgets
+- [ ] Deep link from widget tap → specific magnet in app
+- [ ] Widget button: quick-post text directly from widget (iOS 26 interactive)
+- [ ] **BUILD + TEST**
+
+### Phase 2 Verification Checklist
+- [ ] `xcodebuild build` passes
+- [ ] Widget refreshes via APNs push (not just timeline)
+- [ ] Data syncs between 2 simulators via CloudKit
+- [ ] Invite link creates membership
+- [ ] Widget tap opens correct magnet
+
+---
+
+## 🧠 Phase 3 — AI Integration
+*Goal: On-device AI + OpenClaw agent posting*
+
+### 3A — Foundation Models (On-Device AI)
+- [ ] Import Foundation Models framework
+- [ ] Text generation: "Generate a morning greeting" → post to widget
+- [ ] Summarize: condense recent posts into a summary post
+- [ ] UI: "AI Compose" button in MagnetDetailView
+- [ ] Prompt templates: morning briefing, daily quote, weather summary
+- [ ] Reference: ~/Dev/AppleDev/ WWDC25 Foundation Models code-along
+- [ ] **BUILD + TEST**
+
+### 3B — OpenClaw Agent Webhook
+- [ ] Supabase Edge Function: `POST /functions/v1/agent-post`
+  - Accepts: `{ magnet_id, content_type, text_content, media_url }`
+  - Inserts post into CloudKit (or Supabase mirror)
+  - Triggers APNs widget push to all magnet members
+- [ ] OpenClaw skill or cron job: agent posts on schedule
+- [ ] Agent types configurable in-app:
+  - Morning briefing agent
+  - Daily quote agent  
+  - Weather agent
+  - Custom prompt agent
+- [ ] **BUILD + TEST**
+
+### 3C — Agent Management UI
+- [ ] Settings → "Connect Agent" flow
+- [ ] Agent picker: choose agent type + schedule
+- [ ] Agent status: last post, next scheduled, enable/disable
+- [ ] Per-magnet agent assignment
+- [ ] **BUILD + TEST**
+
+### Phase 3 Verification Checklist
+- [ ] Foundation Models generates text on-device (no API cost)
+- [ ] OpenClaw agent posts via webhook
+- [ ] Widget updates automatically when agent posts
+- [ ] Agent schedule works via cron
+- [ ] No crashes on devices without Apple Intelligence (graceful fallback)
+
+---
+
+## ✨ Phase 4 — Polish & Ship
+*Goal: App Store ready*
+
+### 4A — Design Polish
+- [ ] Liquid Glass widget rendering modes (accented, desaturated)
+- [ ] Widget previews look great in widget gallery
+- [ ] Dark mode support throughout
+- [ ] Dynamic Type / accessibility
+- [ ] Haptic feedback on interactions
+- [ ] App icon design
+- [ ] Launch screen
+- [ ] **SCREENSHOT ALL WIDGET SIZES**
+
+### 4B — Photo Features
+- [ ] Photo filters / overlays for post images
+- [ ] Camera capture directly in post flow
+- [ ] Image compression for CloudKit storage
+- [ ] Photo posts render correctly in all widget sizes
+- [ ] **BUILD + TEST**
+
+### 4C — Notifications
+- [ ] Push notification when friend posts to your magnet
+- [ ] Notification tap → deep link to magnet
+- [ ] Notification settings per-magnet (mute option)
+- [ ] **BUILD + TEST**
+
+### 4D — App Store Submission
+- [ ] Privacy policy (no data collected, CloudKit only)
+- [ ] App Store Connect listing
+  - Screenshots: iPhone 17 Pro, iPad Pro
+  - App preview video
+  - Description, keywords, categories
+- [ ] TestFlight beta (internal)
+- [ ] TestFlight beta (external — 5-10 testers)
+- [ ] Address beta feedback
+- [ ] Submit for review
+- [ ] **SHIP IT** 🚀
+
+### Phase 4 Verification Checklist
+- [ ] No crashes in 1-hour usage session
+- [ ] All widget sizes render correctly
+- [ ] Dark mode works throughout
+- [ ] VoiceOver works on all screens
+- [ ] App Store screenshots captured
+- [ ] Privacy nutrition label complete
+- [ ] TestFlight feedback addressed
+
+---
+
+## 🔮 Phase 5 — Post-Launch (Future)
+*Not blocking v1 ship — track for v1.1+*
+
+- [ ] Android widget (Jetpack Glance) — requires Supabase backend
+- [ ] visionOS widget (free if built with iOS 26 SDK)
+- [ ] CarPlay widget
+- [ ] watchOS relevance widget
+- [ ] Genmoji reactions on posts
+- [ ] Live Activities for "magnet is heating up" (many posts)
+- [ ] AI image generation (DALL-E / Gemini via OpenClaw)
+- [ ] Custom on-device models via ai-edge-torch (~/Dev/ai-edge-torch)
+- [ ] Monetization: premium agent types, custom themes
+- [ ] Transfer repo to groupthinking org
+
+---
+
+## Process Rules (ENFORCED)
+
+### Every phase transition:
+1. `xcodebuild build` must pass — no exceptions
+2. Manual smoke test on simulator
+3. Git commit + push to kk-agent/magnets
+4. Update this TODO.md with results
+5. Notify Hayden with summary
+
+### For each sub-task:
+1. Read existing code before touching it
+2. Make the change
+3. Build immediately — catch errors at the source
+4. Test the specific feature
+5. Commit with descriptive message
+
+### Trust but verify:
+- Codex/agents write code → KK verifies build → only then it's "done"
+- No task is complete until `BUILD SUCCEEDED` is confirmed
+- Screenshots or it didn't happen (for UI work)
+
+### Stall prevention:
+- OpenClaw watchdog cron re-enables for each phase
+- 15-min timeout per agent task — escalate if exceeded
+- GitHub Actions chain auto-assigns next issue on PR merge
+- Hayden gets Telegram ping on completion OR stall
