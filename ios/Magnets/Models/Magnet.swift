@@ -1,0 +1,61 @@
+import Foundation
+import SwiftData
+
+@Model
+final class Magnet {
+    var id: UUID
+    var name: String
+    var inviteCode: String
+    var createdAt: Date
+
+    @Relationship(deleteRule: .cascade, inverse: \Post.magnet)
+    var posts: [Post]
+
+    @Relationship(deleteRule: .cascade, inverse: \MagnetMember.magnet)
+    var members: [MagnetMember]
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        inviteCode: String = Magnet.makeInviteCode(),
+        createdAt: Date = .now
+    ) {
+        self.id = id
+        self.name = name
+        self.inviteCode = inviteCode
+        self.createdAt = createdAt
+        self.posts = []
+        self.members = []
+    }
+}
+
+extension Magnet {
+    var sortedPosts: [Post] {
+        posts.sorted { $0.createdAt > $1.createdAt }
+    }
+
+    var recentPosts: [Post] {
+        Array(sortedPosts.prefix(3))
+    }
+
+    var latestPost: Post? {
+        sortedPosts.first
+    }
+
+    var ownerDisplayName: String {
+        if let owner = members.first(where: { $0.role == .owner }) {
+            return owner.displayName
+        }
+
+        return members.first?.displayName ?? "You"
+    }
+
+    var primaryColorHex: String {
+        latestPost?.backgroundColor ?? MagnetPalette.postColors.first ?? "#5A56F2"
+    }
+
+    private static func makeInviteCode() -> String {
+        let alphabet = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+        return String((0..<8).map { _ in alphabet.randomElement() ?? "M" })
+    }
+}
