@@ -56,7 +56,7 @@ struct PostRowView: View {
 
                 Spacer()
 
-                Text(post.magnet.inviteCode)
+                Text(post.magnet?.inviteCode ?? "--------")
                     .font(.caption2.weight(.bold).monospaced())
                     .foregroundStyle(.white.opacity(0.74))
             }

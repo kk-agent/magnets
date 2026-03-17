@@ -2,13 +2,16 @@ import SwiftData
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(AppRouter.self) private var appRouter
+
     @Query(sort: \Magnet.createdAt, order: .reverse)
     private var magnets: [Magnet]
 
     @State private var isPresentingCreateSheet = false
+    @State private var navigationPath: [HomeDestination] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     heroCard
@@ -18,9 +21,12 @@ struct HomeView: View {
                     } else {
                         LazyVStack(spacing: 18) {
                             ForEach(magnets, id: \.id) { magnet in
-                                NavigationLink {
-                                    MagnetDetailView(magnet: magnet)
-                                } label: {
+                                NavigationLink(
+                                    value: HomeDestination.magnet(
+                                        id: magnet.id,
+                                        inviteCode: magnet.inviteCode
+                                    )
+                                ) {
                                     MagnetCardView(magnet: magnet)
                                 }
                                 .buttonStyle(.plain)
@@ -47,9 +53,27 @@ struct HomeView: View {
                     }
                 }
             }
+            .navigationDestination(for: HomeDestination.self) { destination in
+                switch destination {
+                case let .magnet(id, inviteCode):
+                    if let magnet = magnets.first(where: { $0.id == id }) {
+                        MagnetDetailView(magnet: magnet)
+                    } else {
+                        MissingMagnetLandingView(magnetID: id, inviteCode: inviteCode)
+                    }
+                case let .invite(inviteCode):
+                    InviteLandingView(inviteCode: inviteCode)
+                }
+            }
         }
         .sheet(isPresented: $isPresentingCreateSheet) {
             CreateMagnetView()
+        }
+        .onAppear {
+            handlePendingDeepLink()
+        }
+        .onChange(of: appRouter.pendingLink?.id) { _, _ in
+            handlePendingDeepLink()
         }
     }
 
@@ -171,6 +195,28 @@ struct HomeView: View {
         }
         .ignoresSafeArea()
     }
+
+    private func handlePendingDeepLink() {
+        guard let request = appRouter.consumePendingLink() else {
+            return
+        }
+
+        isPresentingCreateSheet = false
+
+        switch request.link {
+        case .home:
+            navigationPath = []
+        case let .magnet(id, inviteCode):
+            navigationPath = [.magnet(id: id, inviteCode: inviteCode)]
+        case let .join(inviteCode):
+            navigationPath = [.invite(inviteCode: inviteCode)]
+        }
+    }
+}
+
+private enum HomeDestination: Hashable {
+    case magnet(id: UUID, inviteCode: String?)
+    case invite(inviteCode: String)
 }
 
 private struct MagnetCardView: View {
@@ -235,5 +281,100 @@ private struct MagnetCardView: View {
         }
         .frame(height: 196)
         .shadow(color: Color.black.opacity(0.14), radius: 18, y: 10)
+    }
+}
+
+private struct MissingMagnetLandingView: View {
+    let magnetID: UUID
+    let inviteCode: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Image(systemName: "sparkles.rectangle.stack.badge.exclamationmark")
+                .font(.system(size: 38, weight: .semibold))
+                .foregroundStyle(Color(hex: "#4B43E8"))
+
+            Text("This Magnet isn’t on this device yet.")
+                .font(.title2.weight(.bold))
+
+            Text("The widget opened a direct route, but the shared local store doesn’t have that Magnet yet. Phase 2B CloudKit sync will let this resolve automatically across devices.")
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                metadataRow(label: "Magnet ID", value: magnetID.uuidString.lowercased())
+
+                if let inviteCode {
+                    metadataRow(label: "Invite code", value: inviteCode)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(24)
+        .background(background)
+    }
+
+    private var background: some View {
+        LinearGradient(
+            colors: [
+                Color(hex: "#F6F5FF"),
+                Color(hex: "#FFF6F1"),
+                Color.white,
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    }
+
+    private func metadataRow(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            Text(value)
+                .font(.subheadline.monospaced())
+                .textSelection(.enabled)
+        }
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
+private struct InviteLandingView: View {
+    let inviteCode: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Image(systemName: "link.badge.plus")
+                .font(.system(size: 38, weight: .semibold))
+                .foregroundStyle(Color(hex: "#4B43E8"))
+
+            Text("Invite routing is ready.")
+                .font(.title2.weight(.bold))
+
+            Text("This is the landing point for `magnets://join/<code>`. The full join flow comes next, but the app can already resolve and hold the invite code.")
+                .foregroundStyle(.secondary)
+
+            Text(inviteCode)
+                .font(.system(.title3, design: .rounded, weight: .bold).monospaced())
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .background(.ultraThinMaterial, in: Capsule())
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(24)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(hex: "#F6F5FF"),
+                    Color(hex: "#FFF6F1"),
+                    Color.white,
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+        )
     }
 }

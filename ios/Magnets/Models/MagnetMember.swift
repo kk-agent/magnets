@@ -9,11 +9,18 @@ enum MemberRole: String, Codable, CaseIterable, Sendable {
 
 @Model
 final class MagnetMember {
-    var id: UUID
-    var displayName: String
-    var role: MemberRole
-    var joinedAt: Date
-    var magnet: Magnet
+    var id: UUID = UUID()
+    var displayName: String = ""
+    @Attribute(originalName: "role")
+    private var roleValue: String = MemberRole.owner.rawValue
+    var joinedAt: Date = Date.now
+    // Keep the parent relationship optional so CloudKit can hydrate records out of order later.
+    var magnet: Magnet?
+
+    var role: MemberRole {
+        get { MemberRole(rawValue: roleValue) ?? .owner }
+        set { roleValue = newValue.rawValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -24,7 +31,7 @@ final class MagnetMember {
     ) {
         self.id = id
         self.displayName = displayName
-        self.role = role
+        self.roleValue = role.rawValue
         self.joinedAt = joinedAt
         self.magnet = magnet
     }

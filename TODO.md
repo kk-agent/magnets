@@ -43,20 +43,20 @@
 *Goal: Real-time widget updates + multi-user magnets*
 
 ### 2A — WidgetPushHandler (APNs)
-- [ ] Implement `WidgetPushHandler` protocol properly
-  - `pushTokenDidChange` — send token to CloudKit
-  - Register push handler on widget configuration
-- [ ] Add Push Notification entitlement to widget extension
+- [x] Implement `WidgetPushHandler` protocol properly
+  - `pushTokenDidChange` now persists token + widget metadata into App Group JSON
+  - Push handler is registered on the widget configuration
+- [x] Add Push Notification entitlement to widget extension
 - [ ] Server-side push: Edge Function to send APNs requests
 - [ ] Test: post in app → widget updates within seconds
-- [ ] **BUILD + TEST before moving on**
+- [x] **BUILD before moving on**
 
 ### 2B — CloudKit Integration
 - [ ] Enable CloudKit on both targets (app + widget)
 - [ ] Create CloudKit container: `iCloud.com.groupthinking.magnets`
-- [ ] Mark SwiftData models as CloudKit-compatible
-  - Remove any non-CloudKit-friendly types
-  - Ensure all relationships are optional or have defaults
+- [x] Mark SwiftData models as CloudKit-compatible
+  - Backed enum-like values with CloudKit-safe scalars
+  - Ensured to-one relationships are optional and stored properties have defaults
 - [ ] Verify sync between devices (simulator + physical device)
 - [ ] **BUILD + TEST**
 
@@ -69,7 +69,7 @@
 - [ ] **BUILD + TEST**
 
 ### 2D — Interactive Widgets
-- [ ] Deep link from widget tap → specific magnet in app
+- [x] Deep link from widget tap → specific magnet in app
 - [ ] Widget button: quick-post text directly from widget (iOS 26 interactive)
 - [ ] **BUILD + TEST**
 

@@ -22,13 +22,16 @@ private struct MagnetsWidgetEntryView: View {
     let entry: MagnetsEntry
 
     var body: some View {
-        switch family {
-        case .systemSmall:
-            SmallWidgetView(entry: entry)
-        case .systemMedium:
-            MediumWidgetView(entry: entry)
-        default:
-            LargeWidgetView(entry: entry)
+        Group {
+            switch family {
+            case .systemSmall:
+                SmallWidgetView(entry: entry)
+            case .systemMedium:
+                MediumWidgetView(entry: entry)
+            default:
+                LargeWidgetView(entry: entry)
+            }
         }
+        .widgetURL(entry.destinationURL)
     }
 }
