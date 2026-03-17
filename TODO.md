@@ -172,6 +172,21 @@
 
 ---
 
+## 🧭 KK Platform / MCP Notes (Parallel R&D)
+*User context captured 2026-03-17 — not blocking Magnets Phase 2, but relevant to product architecture*
+
+- [ ] Define **KK as a bi-directional MCP server** — not just an app bot, but an orchestration surface
+- [ ] Model **KK's hired team of subagents** as managed workers / on-site operators / contractors-as-needed
+- [ ] Evaluate **Google MCP Toolbox** as part of KK's tool fabric
+  - LookML authoring thread: https://discuss.google.dev/t/from-prompt-to-production-lookml-authoring-in-mcp-toolbox/280101?u=garvey
+  - Release notes: https://github.com/googleapis/genai-toolbox/releases/tag/v0.29.0
+- [ ] Decide whether MCP Toolbox belongs in:
+  - Magnets backend agent layer
+  - KK orchestration runtime
+  - separate internal tooling repo
+
+---
+
 ## 🔮 Phase 5 — Post-Launch (Future)
 *Not blocking v1 ship — track for v1.1+*
 
