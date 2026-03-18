@@ -3,16 +3,16 @@ import SwiftData
 
 @Model
 final class Magnet {
-    var id: UUID
-    var name: String
-    var inviteCode: String
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var inviteCode: String = Magnet.makeInviteCode()
+    var createdAt: Date = Date.now
 
     @Relationship(deleteRule: .cascade, inverse: \Post.magnet)
-    var posts: [Post]
+    var posts: [Post] = []
 
     @Relationship(deleteRule: .cascade, inverse: \MagnetMember.magnet)
-    var members: [MagnetMember]
+    var members: [MagnetMember] = []
 
     init(
         id: UUID = UUID(),
@@ -24,14 +24,24 @@ final class Magnet {
         self.name = name
         self.inviteCode = inviteCode
         self.createdAt = createdAt
-        self.posts = []
-        self.members = []
     }
 }
 
 extension Magnet {
     var sortedPosts: [Post] {
         posts.sorted { $0.createdAt > $1.createdAt }
+    }
+
+    var inviteURL: URL {
+        MagnetsDeepLink.join(inviteCode: inviteCode).url
+    }
+
+    var deepLinkURL: URL {
+        MagnetsDeepLink.magnet(id: id, inviteCode: inviteCode).url
+    }
+
+    var inviteShareText: String {
+        "Join \(name) on Magnets with invite code \(inviteCode)\n\(inviteURL.absoluteString)"
     }
 
     var recentPosts: [Post] {

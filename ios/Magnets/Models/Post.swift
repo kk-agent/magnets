@@ -9,13 +9,20 @@ enum PostContentType: String, Codable, CaseIterable, Sendable {
 
 @Model
 final class Post {
-    var id: UUID
-    var contentType: PostContentType
+    var id: UUID = UUID()
+    @Attribute(originalName: "contentType")
+    private var contentTypeValue: String = PostContentType.text.rawValue
     var textContent: String?
     var mediaURL: String?
-    var backgroundColor: String
-    var createdAt: Date
-    var magnet: Magnet
+    var backgroundColor: String = MagnetPalette.randomPostHex()
+    var createdAt: Date = Date.now
+    // Keep the parent relationship optional so CloudKit can resolve graph edges lazily.
+    var magnet: Magnet?
+
+    var contentType: PostContentType {
+        get { PostContentType(rawValue: contentTypeValue) ?? .text }
+        set { contentTypeValue = newValue.rawValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -27,7 +34,7 @@ final class Post {
         magnet: Magnet
     ) {
         self.id = id
-        self.contentType = contentType
+        self.contentTypeValue = contentType.rawValue
         self.textContent = textContent
         self.mediaURL = mediaURL
         self.backgroundColor = backgroundColor
@@ -55,6 +62,6 @@ extension Post {
     }
 
     var authorDisplayName: String {
-        magnet.ownerDisplayName
+        magnet?.ownerDisplayName ?? "You"
     }
 }

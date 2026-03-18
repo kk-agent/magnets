@@ -1,11 +1,14 @@
+import CloudKit
 import CoreGraphics
 import Foundation
 import ImageIO
 import SwiftData
 import SwiftUI
+import WidgetKit
 
 enum SharedModelContainer {
     static let appGroupID = "group.com.magnets.shared"
+    static let cloudKitContainerIdentifier = "iCloud.com.groupthinking.magnets"
     static let schema = Schema([
         Magnet.self,
         Post.self,
@@ -21,25 +24,31 @@ enum SharedModelContainer {
     }()
 
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
-        let configuration: ModelConfiguration
+        let prefersCloudKit = shouldUseCloudKit(inMemory: inMemory)
 
-        if inMemory {
-            configuration = ModelConfiguration(
-                "Magnets",
-                schema: schema,
-                isStoredInMemoryOnly: true,
-                cloudKitDatabase: .none
-            )
-        } else {
-            configuration = ModelConfiguration(
-                "Magnets",
-                schema: schema,
-                groupContainer: .identifier(appGroupID),
-                cloudKitDatabase: .none
-            )
+        if prefersCloudKit {
+            do {
+                return try ModelContainer(
+                    for: schema,
+                    configurations: [configuration(inMemory: inMemory, cloudKitEnabled: true)]
+                )
+            } catch {
+                #if DEBUG
+                assertionFailure(
+                    """
+                    CloudKit store setup failed for \(cloudKitContainerIdentifier). \
+                    Falling back to the shared local store until the Apple Developer \
+                    container + entitlements are provisioned on a signed-in device: \(error)
+                    """
+                )
+                #endif
+            }
         }
 
-        return try ModelContainer(for: schema, configurations: [configuration])
+        return try ModelContainer(
+            for: schema,
+            configurations: [configuration(inMemory: inMemory, cloudKitEnabled: false)]
+        )
     }
 
     static var groupContainerURL: URL {
@@ -50,6 +59,44 @@ enum SharedModelContainer {
         }
 
         return url
+    }
+
+    private static func configuration(
+        inMemory: Bool,
+        cloudKitEnabled: Bool
+    ) -> ModelConfiguration {
+        if inMemory {
+            return ModelConfiguration(
+                "Magnets",
+                schema: schema,
+                isStoredInMemoryOnly: true,
+                cloudKitDatabase: .none
+            )
+        }
+
+        return ModelConfiguration(
+            "Magnets",
+            schema: schema,
+            groupContainer: .identifier(appGroupID),
+            // SwiftData reads the actual iCloud container binding from entitlements.
+            // The app + widget both need Apple Developer provisioning for
+            // iCloud.com.groupthinking.magnets before device sync/sharing is real.
+            cloudKitDatabase: cloudKitEnabled ? .automatic : .none
+        )
+    }
+
+    private static func shouldUseCloudKit(inMemory: Bool) -> Bool {
+        guard !inMemory else {
+            return false
+        }
+
+        #if targetEnvironment(simulator)
+        // Keep simulator builds on the deterministic local store until a signed-in
+        // device is available to validate the real CloudKit path.
+        return false
+        #else
+        return true
+        #endif
     }
 }
 
@@ -92,6 +139,354 @@ enum SharedMediaStore {
     }
 }
 
+enum CloudKitSyncStatus: Equatable, Sendable {
+    case localOnly
+    case checking
+    case available
+    case noAccount
+    case restricted
+    case temporarilyUnavailable
+    case unavailable(String?)
+
+    var symbolName: String {
+        switch self {
+        case .localOnly:
+            return "icloud.slash"
+        case .checking:
+            return "icloud"
+        case .available:
+            return "icloud.fill"
+        case .noAccount:
+            return "person.crop.circle.badge.exclamationmark"
+        case .restricted:
+            return "exclamationmark.icloud"
+        case .temporarilyUnavailable:
+            return "icloud.bolt"
+        case .unavailable:
+            return "icloud.slash"
+        }
+    }
+
+    var tintColor: Color {
+        switch self {
+        case .available:
+            return Color(hex: "#0AB8A2")
+        case .checking:
+            return Color(hex: "#3E8BFF")
+        case .temporarilyUnavailable:
+            return Color(hex: "#F9A826")
+        case .localOnly, .noAccount, .restricted, .unavailable:
+            return .secondary
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .localOnly:
+            return "Local"
+        case .checking:
+            return "Checking"
+        case .available:
+            return "Synced"
+        case .noAccount:
+            return "No iCloud"
+        case .restricted:
+            return "Restricted"
+        case .temporarilyUnavailable:
+            return "Retrying"
+        case .unavailable:
+            return "Unavailable"
+        }
+    }
+
+    var accessibilityLabel: String {
+        switch self {
+        case .localOnly:
+            return "Cloud sync is using the simulator local fallback"
+        case .checking:
+            return "Checking CloudKit account status"
+        case .available:
+            return "CloudKit account is available"
+        case .noAccount:
+            return "No iCloud account is available for CloudKit"
+        case .restricted:
+            return "CloudKit access is restricted"
+        case .temporarilyUnavailable:
+            return "CloudKit is temporarily unavailable"
+        case let .unavailable(reason):
+            return reason ?? "CloudKit status is unavailable"
+        }
+    }
+}
+
+enum CloudKitStatusProbe {
+    static func currentStatus() async -> CloudKitSyncStatus {
+        #if targetEnvironment(simulator)
+        return .localOnly
+        #else
+        let container = CKContainer(identifier: SharedModelContainer.cloudKitContainerIdentifier)
+
+        return await withCheckedContinuation { continuation in
+            container.accountStatus { accountStatus, error in
+                if let error {
+                    let nsError = error as NSError
+
+                    if nsError.domain == CKErrorDomain,
+                       nsError.code == CKError.notAuthenticated.rawValue {
+                        continuation.resume(returning: .noAccount)
+                        return
+                    }
+
+                    continuation.resume(
+                        returning: .unavailable(error.localizedDescription.trimmedOrNil)
+                    )
+                    return
+                }
+
+                let status: CloudKitSyncStatus
+
+                switch accountStatus {
+                case .available:
+                    status = .available
+                case .noAccount:
+                    status = .noAccount
+                case .restricted:
+                    status = .restricted
+                case .temporarilyUnavailable:
+                    status = .temporarilyUnavailable
+                case .couldNotDetermine:
+                    status = .unavailable("CloudKit could not determine account status.")
+                @unknown default:
+                    status = .unavailable("CloudKit returned an unknown account state.")
+                }
+
+                continuation.resume(returning: status)
+            }
+        }
+        #endif
+    }
+}
+
+enum MagnetsDeepLink: Hashable, Sendable {
+    static let scheme = "magnets"
+
+    case home
+    case magnet(id: UUID, inviteCode: String?)
+    case join(inviteCode: String)
+
+    init?(url: URL) {
+        let pathSegments = url.pathComponents.filter { $0 != "/" }
+        let lowercasedScheme = url.scheme?.lowercased()
+        let lowercasedHost = url.host?.lowercased()
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+
+        if lowercasedScheme == Self.scheme {
+            switch lowercasedHost {
+            case nil, "", "home":
+                self = .home
+            case "magnet":
+                guard let rawIdentifier = pathSegments.first,
+                      let magnetID = UUID(uuidString: rawIdentifier)
+                else {
+                    return nil
+                }
+
+                let inviteCode = components?.queryItems?
+                    .first(where: { $0.name == "invite" })?
+                    .value?
+                    .trimmedOrNil
+
+                self = .magnet(id: magnetID, inviteCode: inviteCode)
+            case "join":
+                guard let inviteCode = pathSegments.first?.trimmedOrNil else {
+                    return nil
+                }
+
+                self = .join(inviteCode: inviteCode)
+            default:
+                return nil
+            }
+
+            return
+        }
+
+        let routeHead = (pathSegments.first ?? url.host ?? "").lowercased()
+
+        switch routeHead {
+        case "", "home":
+            self = .home
+        case "magnet":
+            guard pathSegments.count >= 2,
+                  let magnetID = UUID(uuidString: pathSegments[1])
+            else {
+                return nil
+            }
+
+            let inviteCode = components?.queryItems?
+                .first(where: { $0.name == "invite" })?
+                .value?
+                .trimmedOrNil
+
+            self = .magnet(id: magnetID, inviteCode: inviteCode)
+        case "join":
+            let inviteCode = pathSegments.dropFirst().first ?? components?.queryItems?
+                .first(where: { $0.name == "code" })?
+                .value
+
+            guard let inviteCode = inviteCode?.trimmedOrNil else {
+                return nil
+            }
+
+            self = .join(inviteCode: inviteCode)
+        default:
+            return nil
+        }
+    }
+
+    var url: URL {
+        var components = URLComponents()
+        components.scheme = Self.scheme
+
+        switch self {
+        case .home:
+            components.host = "home"
+        case let .magnet(id, inviteCode):
+            components.host = "magnet"
+            components.path = "/\(id.uuidString.lowercased())"
+
+            if let inviteCode {
+                components.queryItems = [
+                    URLQueryItem(name: "invite", value: inviteCode),
+                ]
+            }
+        case let .join(inviteCode):
+            components.host = "join"
+            components.path = "/\(inviteCode)"
+        }
+
+        return components.url ?? URL(string: "\(Self.scheme)://home")!
+    }
+}
+
+struct StoredWidgetConfiguration: Codable, Equatable, Hashable, Identifiable, Sendable {
+    let id: String
+    let kind: String
+    let family: String
+    let sequence: Int
+    let configurationType: String?
+    let configurationDescription: String?
+
+    init(widgetInfo: WidgetInfo, sequence: Int) {
+        let configurationDescription = widgetInfo.configuration.map { String(describing: $0) }
+
+        self.id = "\(widgetInfo.kind)::\(widgetInfo.family)::\(sequence)"
+        self.kind = widgetInfo.kind
+        self.family = String(describing: widgetInfo.family)
+        self.sequence = sequence
+        self.configurationType = widgetInfo.configuration.map { NSStringFromClass(type(of: $0)) }
+        self.configurationDescription = configurationDescription?.trimmedOrNil
+    }
+}
+
+struct WidgetPushState: Codable, Equatable, Sendable {
+    var tokenHex: String?
+    var lastTokenUpdateAt: Date?
+    var widgets: [StoredWidgetConfiguration]
+
+    static let empty = WidgetPushState(
+        tokenHex: nil,
+        lastTokenUpdateAt: nil,
+        widgets: []
+    )
+
+    var hasPushToken: Bool {
+        tokenHex?.isEmpty == false
+    }
+
+    var tokenPreview: String? {
+        guard let tokenHex, tokenHex.count > 16 else {
+            return tokenHex
+        }
+
+        return "\(tokenHex.prefix(8))…\(tokenHex.suffix(8))"
+    }
+}
+
+enum WidgetPushStateStore {
+    private static let fileName = "widget-push-state.json"
+
+    static var fileURL: URL {
+        SharedModelContainer.groupContainerURL.appendingPathComponent(fileName, isDirectory: false)
+    }
+
+    static func load() -> WidgetPushState {
+        guard let data = try? Data(contentsOf: fileURL) else {
+            return .empty
+        }
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        return (try? decoder.decode(WidgetPushState.self, from: data)) ?? .empty
+    }
+
+    @discardableResult
+    static func update(
+        pushToken: Data?,
+        widgets: [WidgetInfo]? = nil,
+        preserveExistingToken: Bool = true,
+        now: Date = .now
+    ) -> WidgetPushState {
+        let existingState = load()
+        let storedWidgets = widgets.map { currentWidgets in
+            currentWidgets.enumerated().map { index, widgetInfo in
+                StoredWidgetConfiguration(widgetInfo: widgetInfo, sequence: index)
+            }
+        } ?? existingState.widgets
+
+        let incomingTokenHex = pushToken?.hexString
+        let effectiveTokenHex = incomingTokenHex ?? (preserveExistingToken ? existingState.tokenHex : nil)
+        let didChangeToken = incomingTokenHex.map { $0 != existingState.tokenHex } ?? false
+
+        let newState = WidgetPushState(
+            tokenHex: effectiveTokenHex,
+            lastTokenUpdateAt: didChangeToken ? now : existingState.lastTokenUpdateAt,
+            widgets: storedWidgets
+        )
+
+        guard newState != existingState else {
+            return existingState
+        }
+
+        save(newState)
+        return newState
+    }
+
+    @discardableResult
+    static func refreshFromSystem() async -> WidgetPushState {
+        let currentPushInfo = await WidgetCenter.shared.currentPushInfo
+        let widgets = try? await WidgetCenter.shared.currentConfigurations()
+
+        return update(
+            pushToken: currentPushInfo?.token,
+            widgets: widgets,
+            preserveExistingToken: true
+        )
+    }
+
+    private static func save(_ state: WidgetPushState) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        guard let data = try? encoder.encode(state) else {
+            return
+        }
+
+        try? data.write(to: fileURL, options: .atomic)
+    }
+}
+
 enum MagnetPalette {
     static let postColors = [
         "#5A56F2",
@@ -131,5 +526,18 @@ extension Color {
         }
 
         self = Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha)
+    }
+}
+
+private extension Data {
+    var hexString: String {
+        map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+private extension String {
+    var trimmedOrNil: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }

@@ -61,13 +61,23 @@ struct WidgetPostSnapshot: Identifiable, Hashable {
 
 struct MagnetsEntry: TimelineEntry {
     let date: Date
+    let magnetID: UUID?
     let magnetName: String
     let inviteCode: String
     let latestPost: WidgetPostSnapshot?
     let recentPosts: [WidgetPostSnapshot]
 
+    var destinationURL: URL {
+        if let magnetID {
+            return MagnetsDeepLink.magnet(id: magnetID, inviteCode: inviteCode).url
+        }
+
+        return MagnetsDeepLink.home.url
+    }
+
     static let placeholder = MagnetsEntry(
         date: .now,
+        magnetID: UUID(),
         magnetName: "Weekend Crew",
         inviteCode: "MAGN3TS",
         latestPost: WidgetPostSnapshot(
@@ -112,6 +122,7 @@ struct MagnetsEntry: TimelineEntry {
 
     static let empty = MagnetsEntry(
         date: .now,
+        magnetID: nil,
         magnetName: "Magnets",
         inviteCode: "--------",
         latestPost: nil,
@@ -152,6 +163,7 @@ struct Provider: TimelineProvider {
 
             return MagnetsEntry(
                 date: .now,
+                magnetID: magnet.id,
                 magnetName: magnet.name,
                 inviteCode: magnet.inviteCode,
                 latestPost: posts.first,

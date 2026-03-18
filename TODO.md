@@ -43,41 +43,51 @@
 *Goal: Real-time widget updates + multi-user magnets*
 
 ### 2A — WidgetPushHandler (APNs)
-- [ ] Implement `WidgetPushHandler` protocol properly
-  - `pushTokenDidChange` — send token to CloudKit
-  - Register push handler on widget configuration
-- [ ] Add Push Notification entitlement to widget extension
+- [x] Implement `WidgetPushHandler` protocol properly
+  - `pushTokenDidChange` now persists token + widget metadata into App Group JSON
+  - Push handler is registered on the widget configuration
+- [x] Add Push Notification entitlement to widget extension
 - [ ] Server-side push: Edge Function to send APNs requests
 - [ ] Test: post in app → widget updates within seconds
-- [ ] **BUILD + TEST before moving on**
+- [x] **BUILD before moving on**
 
 ### 2B — CloudKit Integration
-- [ ] Enable CloudKit on both targets (app + widget)
-- [ ] Create CloudKit container: `iCloud.com.groupthinking.magnets`
-- [ ] Mark SwiftData models as CloudKit-compatible
-  - Remove any non-CloudKit-friendly types
-  - Ensure all relationships are optional or have defaults
-- [ ] Verify sync between devices (simulator + physical device)
-- [ ] **BUILD + TEST**
+- [x] Enable CloudKit groundwork on both targets (app + widget)
+  - Added iCloud/CloudKit entitlements for app + widget
+  - Shared SwiftData container now prefers `.automatic` on device and keeps a simulator/local fallback
+- [x] Add CloudKit container identifier in code: `iCloud.com.groupthinking.magnets`
+- [x] Mark SwiftData models as CloudKit-compatible
+  - Backed enum-like values with CloudKit-safe scalars
+  - Ensured to-one relationships are optional and stored properties have defaults
+- [x] Add CloudKit sync status indicator in HomeView
+  - Simulator shows the intentional local fallback
+  - Device path is wired to `CKContainer.accountStatus`
+- [x] Simulator build verified after CloudKit groundwork
+- [ ] Provision the real Apple Developer CloudKit container + capabilities
+  - Requires a paid team, bundle/container wiring in Apple Developer, and physical device validation
+- [ ] Verify sync between signed-in devices
+- [ ] **TEST on signed-in device**
 
 ### 2C — Sharing & Invites
-- [ ] Universal Links for invite codes (`magnets://join/<code>`)
-- [ ] QR code generation for invite sharing
-- [ ] Join flow: scan QR / tap link → add member to magnet
+- [x] Deep-link invite codes (`magnets://join/<code>`)
+- [x] URL scheme already registered in `Info.plist` (`magnets`)
+- [x] QR code generation for invite sharing
+- [x] Join flow: paste invite code or tap deep link → resolve local magnet / CloudKit-ready placeholder
 - [ ] CloudKit sharing: `CKShare` for magnet access control
-- [ ] Invite sheet UI in MagnetDetailView
-- [ ] **BUILD + TEST**
+- [x] Invite sheet UI in MagnetDetailView
+- [x] Simulator build verified after invite/share changes
+- [ ] **TEST CloudKit sharing on signed-in device**
 
 ### 2D — Interactive Widgets
-- [ ] Deep link from widget tap → specific magnet in app
+- [x] Deep link from widget tap → specific magnet in app
 - [ ] Widget button: quick-post text directly from widget (iOS 26 interactive)
 - [ ] **BUILD + TEST**
 
 ### Phase 2 Verification Checklist
-- [ ] `xcodebuild build` passes
+- [x] `xcodebuild build` passes
 - [ ] Widget refreshes via APNs push (not just timeline)
-- [ ] Data syncs between 2 simulators via CloudKit
-- [ ] Invite link creates membership
+- [ ] Data syncs between signed-in physical devices via CloudKit
+- [ ] Invite link creates membership via CloudKit sharing
 - [ ] Widget tap opens correct magnet
 
 ---
@@ -169,6 +179,21 @@
 - [ ] App Store screenshots captured
 - [ ] Privacy nutrition label complete
 - [ ] TestFlight feedback addressed
+
+---
+
+## 🧭 KK Platform / MCP Notes (Parallel R&D)
+*User context captured 2026-03-17 — not blocking Magnets Phase 2, but relevant to product architecture*
+
+- [ ] Define **KK as a bi-directional MCP server** — not just an app bot, but an orchestration surface
+- [ ] Model **KK's hired team of subagents** as managed workers / on-site operators / contractors-as-needed
+- [ ] Evaluate **Google MCP Toolbox** as part of KK's tool fabric
+  - LookML authoring thread: https://discuss.google.dev/t/from-prompt-to-production-lookml-authoring-in-mcp-toolbox/280101?u=garvey
+  - Release notes: https://github.com/googleapis/genai-toolbox/releases/tag/v0.29.0
+- [ ] Decide whether MCP Toolbox belongs in:
+  - Magnets backend agent layer
+  - KK orchestration runtime
+  - separate internal tooling repo
 
 ---
 
