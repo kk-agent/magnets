@@ -5,6 +5,9 @@ import SwiftData
 import SwiftUI
 import UIKit
 import WidgetKit
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
 
 struct MagnetDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -16,6 +19,8 @@ struct MagnetDetailView: View {
     @State private var composerMessage: String?
     @State private var isSaving = false
     @State private var isPresentingInviteSheet = false
+    @State private var isPresentingAIComposeSheet = false
+    @State private var draftSource: ComposerDraftSource = .manual
 
     private var sortedPosts: [Post] {
         magnet.sortedPosts
@@ -23,6 +28,18 @@ struct MagnetDetailView: View {
 
     private var canSend: Bool {
         !draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedPhoto != nil
+    }
+
+    private var aiComposeAvailability: AIComposeAvailability {
+        AIComposeService.availability
+    }
+
+    private var aiComposeContext: AIComposeContext {
+        AIComposeContext(
+            magnetName: magnet.name,
+            primaryColorHex: magnet.primaryColorHex,
+            recentPostSnippets: Array(sortedPosts.prefix(4)).map(\.aiSummarySnippet)
+        )
     }
 
     var body: some View {
@@ -60,8 +77,25 @@ struct MagnetDetailView: View {
         .safeAreaInset(edge: .bottom) {
             composer
         }
+        .sheet(isPresented: $isPresentingAIComposeSheet) {
+            AIComposeSheet(context: aiComposeContext) { generatedText in
+                draftText = generatedText
+                draftSource = .aiGenerated
+                composerMessage = "AI draft ready. Give it a quick edit, then send."
+            }
+        }
         .sheet(isPresented: $isPresentingInviteSheet) {
             InviteView(magnet: magnet)
+        }
+        .onChange(of: draftText) { _, newValue in
+            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, selectedPhoto == nil {
+                draftSource = .manual
+            }
+        }
+        .onChange(of: selectedPhoto) { _, newValue in
+            if newValue == nil, draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                draftSource = .manual
+            }
         }
     }
 
@@ -136,7 +170,9 @@ struct MagnetDetailView: View {
     }
 
     private var composer: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let composerAccent = Color(hex: magnet.primaryColorHex)
+
+        return VStack(alignment: .leading, spacing: 10) {
             if let composerMessage {
                 Text(composerMessage)
                     .font(.caption.weight(.medium))
@@ -147,7 +183,7 @@ struct MagnetDetailView: View {
             if selectedPhoto != nil {
                 HStack(spacing: 10) {
                     Image(systemName: "photo.fill")
-                        .foregroundStyle(Color(hex: magnet.primaryColorHex))
+                        .foregroundStyle(composerAccent)
 
                     Text("Photo ready to send")
                         .font(.subheadline.weight(.medium))
@@ -175,9 +211,30 @@ struct MagnetDetailView: View {
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     Image(systemName: "photo.badge.plus")
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(Color(hex: magnet.primaryColorHex))
+                        .foregroundStyle(composerAccent)
                         .frame(width: 50, height: 50)
                         .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+
+                if aiComposeAvailability.shouldShowButton {
+                    Button {
+                        isPresentingAIComposeSheet = true
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(
+                                aiComposeAvailability.isAvailable
+                                ? composerAccent
+                                : .secondary
+                            )
+                            .frame(width: 50, height: 50)
+                            .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
+                    .disabled(!aiComposeAvailability.isAvailable || isSaving)
+                    .opacity(aiComposeAvailability.isAvailable ? 1 : 0.45)
+                    .accessibilityLabel("AI Compose")
+                    .accessibilityHint(aiComposeAvailability.helpText)
+                    .help(aiComposeAvailability.helpText)
                 }
 
                 Button {
@@ -213,6 +270,12 @@ struct MagnetDetailView: View {
                 }
                 .disabled(!canSend || isSaving)
                 .opacity(canSend ? 1 : 0.45)
+            }
+
+            if let unavailableMessage = aiComposeAvailability.unavailableMessage {
+                Label(unavailableMessage, systemImage: "sparkles")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, 20)
@@ -265,7 +328,7 @@ struct MagnetDetailView: View {
         }
 
         let post = Post(
-            contentType: storedMediaPath == nil ? .text : .photo,
+            contentType: postContentType(for: storedMediaPath),
             textContent: trimmedText.isEmpty ? nil : trimmedText,
             mediaURL: storedMediaPath,
             backgroundColor: MagnetPalette.randomPostHex(),
@@ -278,10 +341,539 @@ struct MagnetDetailView: View {
             try modelContext.save()
             draftText = ""
             selectedPhoto = nil
+            draftSource = .manual
             WidgetCenter.shared.reloadAllTimelines()
         } catch {
             composerMessage = "Couldn’t save that post. Try once more."
         }
+    }
+
+    private func postContentType(for storedMediaPath: String?) -> PostContentType {
+        if storedMediaPath != nil {
+            return .photo
+        }
+
+        return draftSource == .aiGenerated ? .aiGenerated : .text
+    }
+}
+
+private enum ComposerDraftSource {
+    case manual
+    case aiGenerated
+}
+
+private struct AIComposeContext: Sendable {
+    let magnetName: String
+    let primaryColorHex: String
+    let recentPostSnippets: [String]
+}
+
+private enum AIComposePreset: String, CaseIterable, Identifiable {
+    case morningGreeting
+    case dailyQuote
+    case summarizeRecent
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .morningGreeting:
+            return "Morning greeting"
+        case .dailyQuote:
+            return "Daily quote"
+        case .summarizeRecent:
+            return "Summarize recent"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .morningGreeting:
+            return "Generate a warm good-morning note for the widget."
+        case .dailyQuote:
+            return "Create a short inspirational line that feels fresh."
+        case .summarizeRecent:
+            return "Condense the latest posts into one quick recap."
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .morningGreeting:
+            return "sun.max.fill"
+        case .dailyQuote:
+            return "quote.bubble.fill"
+        case .summarizeRecent:
+            return "text.redaction"
+        }
+    }
+
+    func isEnabled(in context: AIComposeContext) -> Bool {
+        switch self {
+        case .summarizeRecent:
+            return !context.recentPostSnippets.isEmpty
+        case .morningGreeting, .dailyQuote:
+            return true
+        }
+    }
+
+    var disabledMessage: String {
+        switch self {
+        case .summarizeRecent:
+            return "Share a few posts first so AI has something to summarize."
+        case .morningGreeting, .dailyQuote:
+            return ""
+        }
+    }
+}
+
+private struct AIComposeAvailability: Equatable {
+    enum State: Equatable {
+        case available
+        case unavailable(String)
+        case unsupportedFramework
+    }
+
+    let state: State
+
+    var shouldShowButton: Bool {
+        state != .unsupportedFramework
+    }
+
+    var isAvailable: Bool {
+        state == .available
+    }
+
+    var unavailableMessage: String? {
+        guard case let .unavailable(message) = state else {
+            return nil
+        }
+
+        return message
+    }
+
+    var helpText: String {
+        switch state {
+        case .available:
+            return "Generate a short on-device draft."
+        case let .unavailable(message):
+            return message
+        case .unsupportedFramework:
+            return "Foundation Models isn’t available in this build."
+        }
+    }
+}
+
+private enum AIComposeError: LocalizedError {
+    case unavailable(String)
+    case emptyCustomPrompt
+    case emptyResponse
+
+    var errorDescription: String? {
+        switch self {
+        case let .unavailable(message):
+            return message
+        case .emptyCustomPrompt:
+            return "Add a short custom prompt first."
+        case .emptyResponse:
+            return "The model returned an empty draft. Try again."
+        }
+    }
+}
+
+private enum AIComposeService {
+    static var availability: AIComposeAvailability {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            return AIComposeAvailability(systemAvailability: SystemLanguageModel.default.availability)
+        }
+
+        return AIComposeAvailability(state: .unavailable("Requires iOS 26 or newer."))
+        #else
+        return AIComposeAvailability(state: .unsupportedFramework)
+        #endif
+    }
+
+    static func generateDraft(
+        for preset: AIComposePreset?,
+        customPrompt: String,
+        context: AIComposeContext
+    ) async throws -> String {
+        let availability = availability
+
+        guard availability.isAvailable else {
+            throw AIComposeError.unavailable(
+                availability.unavailableMessage ?? "Apple Intelligence isn’t available right now."
+            )
+        }
+
+        let trimmedCustomPrompt = customPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let prompt = makePrompt(
+            for: preset,
+            customPrompt: trimmedCustomPrompt,
+            context: context
+        ) else {
+            throw AIComposeError.emptyCustomPrompt
+        }
+
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            let session = LanguageModelSession(
+                model: SystemLanguageModel.default,
+                instructions: """
+                Write one short post for the Magnets iOS app.
+                Keep it natural, friendly, and under 220 characters.
+                Return only the final post text with no title, bullets, or quotation marks.
+                """
+            )
+
+            let response = try await session.respond(to: prompt)
+            let trimmed = response.content
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "\"“”"))
+
+            guard !trimmed.isEmpty else {
+                throw AIComposeError.emptyResponse
+            }
+
+            return trimmed
+        }
+        #endif
+
+        throw AIComposeError.unavailable("Foundation Models isn’t available in this build.")
+    }
+
+    private static func makePrompt(
+        for preset: AIComposePreset?,
+        customPrompt: String,
+        context: AIComposeContext
+    ) -> String? {
+        switch preset {
+        case .morningGreeting:
+            return "Write a friendly morning greeting for the shared widget \(context.magnetName). Warm tone. One short message."
+        case .dailyQuote:
+            return "Write one original inspirational quote for the shared widget \(context.magnetName). Keep it punchy and uplifting."
+        case .summarizeRecent:
+            guard !context.recentPostSnippets.isEmpty else {
+                return nil
+            }
+
+            let updates = context.recentPostSnippets.joined(separator: " | ")
+            return "Summarize these recent \(context.magnetName) updates in 1 or 2 short sentences: \(updates)"
+        case nil:
+            guard !customPrompt.isEmpty else {
+                return nil
+            }
+
+            return "Write a short post for the shared widget \(context.magnetName). User request: \(customPrompt)"
+        }
+    }
+}
+
+#if canImport(FoundationModels)
+@available(iOS 26.0, *)
+private extension AIComposeAvailability {
+    init(systemAvailability: SystemLanguageModel.Availability) {
+        switch systemAvailability {
+        case .available:
+            self.init(state: .available)
+        case .unavailable(.deviceNotEligible):
+            self.init(state: .unavailable("Requires Apple Intelligence on a supported device."))
+        case .unavailable(.appleIntelligenceNotEnabled):
+            self.init(state: .unavailable("Turn on Apple Intelligence to use AI Compose."))
+        case .unavailable(.modelNotReady):
+            self.init(state: .unavailable("Apple Intelligence is still getting ready."))
+        @unknown default:
+            self.init(state: .unavailable("Apple Intelligence isn’t available right now."))
+        }
+    }
+}
+#endif
+
+private struct AIComposeSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let context: AIComposeContext
+    let onDraftGenerated: (String) -> Void
+
+    @State private var customPrompt = ""
+    @State private var generationError: String?
+    @State private var isGenerating = false
+    @State private var generatingPreset: AIComposePreset?
+    @FocusState private var isCustomPromptFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    heroCard
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Prompt ideas")
+                            .font(.headline.weight(.bold))
+
+                        ForEach(AIComposePreset.allCases) { preset in
+                            promptOptionCard(for: preset)
+                        }
+                    }
+                    .padding(22)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 30, style: .continuous)
+                            .strokeBorder(.white.opacity(0.24), lineWidth: 1)
+                    }
+
+                    customPromptCard
+
+                    if isGenerating {
+                        generatingCard
+                    }
+
+                    if let generationError {
+                        errorCard(message: generationError)
+                    }
+                }
+                .padding(24)
+            }
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(hex: "#F7F3FF"),
+                        Color(hex: "#EEF3FF"),
+                        Color(hex: "#FFF7F2"),
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            )
+            .navigationTitle("AI Compose")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .disabled(isGenerating)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationCornerRadius(32)
+        .presentationDragIndicator(.visible)
+    }
+
+    private var heroCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Prompt the model")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+
+                    Text("Everything stays on device. Pick a short preset or hand it a custom nudge, then review the draft before posting.")
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "sparkles")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(Color(hex: context.primaryColorHex))
+                    .padding(14)
+                    .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+
+            if !context.recentPostSnippets.isEmpty {
+                Label("\(context.recentPostSnippets.count) recent posts ready for summarizing", systemImage: "rectangle.stack.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color(hex: context.primaryColorHex))
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .background(.white.opacity(0.6), in: Capsule())
+            }
+        }
+        .padding(22)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .strokeBorder(.white.opacity(0.24), lineWidth: 1)
+        }
+    }
+
+    private var customPromptCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Custom prompt")
+                .font(.headline.weight(.bold))
+
+            TextField("Ask for something short and specific…", text: $customPrompt, axis: .vertical)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .lineLimit(2...5)
+                .focused($isCustomPromptFocused)
+
+            Button {
+                isCustomPromptFocused = false
+                generateDraft(using: nil)
+            } label: {
+                Label("Generate from custom prompt", systemImage: "wand.and.stars")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color(hex: context.primaryColorHex))
+            .disabled(customPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isGenerating)
+        }
+        .padding(22)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .strokeBorder(.white.opacity(0.24), lineWidth: 1)
+        }
+    }
+
+    private var generatingCard: some View {
+        HStack(spacing: 14) {
+            ProgressView()
+                .tint(Color(hex: context.primaryColorHex))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Generating on device…")
+                    .font(.subheadline.weight(.semibold))
+
+                Text("Keeping the prompt tight so the system model can move fast.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(18)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(.white.opacity(0.22), lineWidth: 1)
+        }
+    }
+
+    private func errorCard(message: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Color(hex: "#FF6B6B"))
+
+            Text(message)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding(18)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(.white.opacity(0.22), lineWidth: 1)
+        }
+    }
+
+    private func promptOptionCard(for preset: AIComposePreset) -> some View {
+        let isEnabled = preset.isEnabled(in: context)
+        let isCurrentPreset = generatingPreset == preset
+
+        return Button {
+            generateDraft(using: preset)
+        } label: {
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: preset.iconName)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(isEnabled ? Color(hex: context.primaryColorHex) : .secondary)
+                    .frame(width: 42, height: 42)
+                    .background(.white.opacity(0.68), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(preset.title)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.primary)
+
+                    Text(isEnabled ? preset.subtitle : preset.disabledMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                if isCurrentPreset && isGenerating {
+                    ProgressView()
+                        .tint(Color(hex: context.primaryColorHex))
+                } else {
+                    Image(systemName: "arrow.up.right")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(isEnabled ? Color(hex: context.primaryColorHex) : .secondary)
+                }
+            }
+            .padding(18)
+            .background(.white.opacity(0.4), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled || isGenerating)
+        .opacity(isEnabled ? 1 : 0.52)
+    }
+
+    private func generateDraft(using preset: AIComposePreset?) {
+        let availability = AIComposeService.availability
+
+        guard availability.isAvailable else {
+            generationError = availability.unavailableMessage ?? "Apple Intelligence isn’t available right now."
+            return
+        }
+
+        if let preset, !preset.isEnabled(in: context) {
+            generationError = preset.disabledMessage
+            return
+        }
+
+        generationError = nil
+        generatingPreset = preset
+        isGenerating = true
+
+        Task {
+            do {
+                let generatedDraft = try await AIComposeService.generateDraft(
+                    for: preset,
+                    customPrompt: customPrompt,
+                    context: context
+                )
+
+                await MainActor.run {
+                    isGenerating = false
+                    generatingPreset = nil
+                    onDraftGenerated(generatedDraft)
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isGenerating = false
+                    generatingPreset = nil
+                    generationError = error.localizedDescription
+                }
+            }
+        }
+    }
+}
+
+private extension Post {
+    var aiSummarySnippet: String {
+        let sanitized = displayText
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard sanitized.count > 96 else {
+            return sanitized
+        }
+
+        let endIndex = sanitized.index(sanitized.startIndex, offsetBy: 93)
+        return String(sanitized[..<endIndex]) + "..."
     }
 }
 
