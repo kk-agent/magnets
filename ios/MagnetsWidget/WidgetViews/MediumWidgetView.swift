@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -19,9 +20,9 @@ struct MediumWidgetView: View {
                     Text(post.displayText)
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundStyle(.white)
-                        .lineLimit(4)
+                        .lineLimit(3)
 
-                    Spacer()
+                    Spacer(minLength: 0)
 
                     HStack {
                         Label(post.authorName, systemImage: "person.crop.circle.fill")
@@ -35,14 +36,18 @@ struct MediumWidgetView: View {
                             .foregroundStyle(.white.opacity(0.62))
                     }
                 } else {
-                    Spacer()
+                    Spacer(minLength: 0)
 
                     Text("Add a first note or photo to light up the widget.")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
                         .lineLimit(3)
 
-                    Spacer()
+                    Spacer(minLength: 0)
+                }
+
+                if let magnetID = entry.magnetID {
+                    quickPostButton(for: magnetID)
                 }
             }
         }
@@ -105,5 +110,28 @@ struct MediumWidgetView: View {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
+    }
+
+    private func quickPostButton(for magnetID: UUID) -> some View {
+        Button(intent: PostToMagnetIntent(magnetID: magnetID.uuidString, quickMessage: "👋")) {
+            HStack(spacing: 10) {
+                Text("👋")
+                    .font(.body)
+
+                Text("Quick post")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "paperplane.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.88))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(.white.opacity(0.14), in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }

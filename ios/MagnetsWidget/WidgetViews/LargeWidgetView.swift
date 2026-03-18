@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -44,6 +45,12 @@ struct LargeWidgetView: View {
                     }
                 }
             }
+
+            Spacer(minLength: 0)
+
+            if let magnetID = entry.magnetID {
+                quickPostActions(for: magnetID)
+            }
         }
         .padding(18)
         .containerBackground(for: .widget) {
@@ -56,6 +63,59 @@ struct LargeWidgetView: View {
                 endPoint: .bottomTrailing
             )
         }
+    }
+
+    private func quickPostActions(for magnetID: UUID) -> some View {
+        HStack(spacing: 10) {
+            quickPostButton(
+                magnetID: magnetID,
+                quickMessage: "👋",
+                title: "Wave",
+                systemImage: "hand.wave.fill"
+            )
+
+            quickPostButton(
+                magnetID: magnetID,
+                quickMessage: "❤️",
+                title: "Send love",
+                systemImage: "heart.fill"
+            )
+        }
+    }
+
+    private func quickPostButton(
+        magnetID: UUID,
+        quickMessage: String,
+        title: String,
+        systemImage: String
+    ) -> some View {
+        Button(intent: PostToMagnetIntent(magnetID: magnetID.uuidString, quickMessage: quickMessage)) {
+            HStack(spacing: 10) {
+                Text(quickMessage)
+                    .font(.body)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+
+                    Text("Post instantly")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.68))
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: systemImage)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.88))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .frame(maxWidth: .infinity)
+            .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 
