@@ -32,6 +32,18 @@ extension Magnet {
         posts.sorted { $0.createdAt > $1.createdAt }
     }
 
+    var inviteURL: URL {
+        MagnetsDeepLink.join(inviteCode: inviteCode).url
+    }
+
+    var deepLinkURL: URL {
+        MagnetsDeepLink.magnet(id: id, inviteCode: inviteCode).url
+    }
+
+    var inviteShareText: String {
+        "Join \(name) on Magnets with invite code \(inviteCode)\n\(inviteURL.absoluteString)"
+    }
+
     var recentPosts: [Post] {
         Array(sortedPosts.prefix(3))
     }

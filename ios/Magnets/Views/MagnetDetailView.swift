@@ -1,6 +1,9 @@
+import CoreImage
+import CoreImage.CIFilterBuiltins
 import PhotosUI
 import SwiftData
 import SwiftUI
+import UIKit
 import WidgetKit
 
 struct MagnetDetailView: View {
@@ -12,6 +15,7 @@ struct MagnetDetailView: View {
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var composerMessage: String?
     @State private var isSaving = false
+    @State private var isPresentingInviteSheet = false
 
     private var sortedPosts: [Post] {
         magnet.sortedPosts
@@ -44,8 +48,20 @@ struct MagnetDetailView: View {
         .background(backgroundView)
         .navigationTitle(magnet.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isPresentingInviteSheet = true
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             composer
+        }
+        .sheet(isPresented: $isPresentingInviteSheet) {
+            InviteView(magnet: magnet)
         }
     }
 
@@ -265,6 +281,200 @@ struct MagnetDetailView: View {
             WidgetCenter.shared.reloadAllTimelines()
         } catch {
             composerMessage = "Couldn’t save that post. Try once more."
+        }
+    }
+}
+
+private struct InviteView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let magnet: Magnet
+
+    @State private var copiedValueMessage: String?
+
+    private var inviteLinkString: String {
+        magnet.inviteURL.absoluteString
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    inviteHeroCard
+                    qrCard
+                    actionsCard
+                }
+                .padding(24)
+            }
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(hex: "#F7F3FF"),
+                        Color(hex: "#FFF7F2"),
+                        Color.white,
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            )
+            .navigationTitle("Invite")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.large])
+        .presentationCornerRadius(32)
+    }
+
+    private var inviteHeroCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Share \(magnet.name)")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+
+            Text("Anyone with the invite code or deep link can land in the join flow. Real multi-device access still depends on CloudKit provisioning + iCloud sign-in.")
+                .foregroundStyle(.secondary)
+
+            Text(magnet.inviteCode)
+                .font(.system(size: 34, weight: .bold, design: .rounded).monospaced())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(.white.opacity(0.74), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+
+            Text(inviteLinkString)
+                .font(.footnote.monospaced())
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+        }
+        .padding(22)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .strokeBorder(.white.opacity(0.24), lineWidth: 1)
+        }
+    }
+
+    private var qrCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("QR code")
+                .font(.headline.weight(.bold))
+
+            Text("This encodes the `magnets://join/<code>` route so the app can jump straight into the join flow.")
+                .foregroundStyle(.secondary)
+
+            InviteQRCodeView(payload: inviteLinkString)
+                .frame(maxWidth: .infinity)
+        }
+        .padding(22)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .strokeBorder(.white.opacity(0.24), lineWidth: 1)
+        }
+    }
+
+    private var actionsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Actions")
+                .font(.headline.weight(.bold))
+
+            if let copiedValueMessage {
+                Text(copiedValueMessage)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color(hex: "#0AB8A2"))
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    copyInviteCode()
+                } label: {
+                    Label("Copy Code", systemImage: "document.on.document")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    copyInviteLink()
+                } label: {
+                    Label("Copy Link", systemImage: "link")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
+
+            ShareLink(item: magnet.inviteShareText) {
+                Label("Share Invite", systemImage: "square.and.arrow.up")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color(hex: magnet.primaryColorHex))
+        }
+        .padding(22)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .strokeBorder(.white.opacity(0.24), lineWidth: 1)
+        }
+    }
+
+    private func copyInviteCode() {
+        UIPasteboard.general.string = magnet.inviteCode
+        copiedValueMessage = "Invite code copied."
+    }
+
+    private func copyInviteLink() {
+        UIPasteboard.general.string = inviteLinkString
+        copiedValueMessage = "Invite link copied."
+    }
+}
+
+private struct InviteQRCodeView: View {
+    private static let ciContext = CIContext()
+
+    let payload: String
+
+    private var qrCodeImage: CGImage? {
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(payload.utf8)
+        filter.correctionLevel = "M"
+
+        guard let outputImage = filter.outputImage?
+            .transformed(by: CGAffineTransform(scaleX: 10, y: 10)),
+              let cgImage = Self.ciContext.createCGImage(outputImage, from: outputImage.extent)
+        else {
+            return nil
+        }
+
+        return cgImage
+    }
+
+    var body: some View {
+        Group {
+            if let qrCodeImage {
+                Image(decorative: qrCodeImage, scale: 1, orientation: .up)
+                    .interpolation(.none)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 220, height: 220)
+                    .padding(20)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            } else {
+                VStack(spacing: 10) {
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 34, weight: .semibold))
+                    Text("QR generation failed.")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(40)
+                .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            }
         }
     }
 }

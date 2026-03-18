@@ -1,3 +1,4 @@
+import CloudKit
 import CoreGraphics
 import Foundation
 import ImageIO
@@ -7,6 +8,7 @@ import WidgetKit
 
 enum SharedModelContainer {
     static let appGroupID = "group.com.magnets.shared"
+    static let cloudKitContainerIdentifier = "iCloud.com.groupthinking.magnets"
     static let schema = Schema([
         Magnet.self,
         Post.self,
@@ -22,27 +24,31 @@ enum SharedModelContainer {
     }()
 
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
-        // Phase 2A keeps the live store local inside the shared App Group so the
-        // Phase 1 build stays deterministic while the schema is shaped for CloudKit.
-        let configuration: ModelConfiguration
+        let prefersCloudKit = shouldUseCloudKit(inMemory: inMemory)
 
-        if inMemory {
-            configuration = ModelConfiguration(
-                "Magnets",
-                schema: schema,
-                isStoredInMemoryOnly: true,
-                cloudKitDatabase: .none
-            )
-        } else {
-            configuration = ModelConfiguration(
-                "Magnets",
-                schema: schema,
-                groupContainer: .identifier(appGroupID),
-                cloudKitDatabase: .none
-            )
+        if prefersCloudKit {
+            do {
+                return try ModelContainer(
+                    for: schema,
+                    configurations: [configuration(inMemory: inMemory, cloudKitEnabled: true)]
+                )
+            } catch {
+                #if DEBUG
+                assertionFailure(
+                    """
+                    CloudKit store setup failed for \(cloudKitContainerIdentifier). \
+                    Falling back to the shared local store until the Apple Developer \
+                    container + entitlements are provisioned on a signed-in device: \(error)
+                    """
+                )
+                #endif
+            }
         }
 
-        return try ModelContainer(for: schema, configurations: [configuration])
+        return try ModelContainer(
+            for: schema,
+            configurations: [configuration(inMemory: inMemory, cloudKitEnabled: false)]
+        )
     }
 
     static var groupContainerURL: URL {
@@ -53,6 +59,44 @@ enum SharedModelContainer {
         }
 
         return url
+    }
+
+    private static func configuration(
+        inMemory: Bool,
+        cloudKitEnabled: Bool
+    ) -> ModelConfiguration {
+        if inMemory {
+            return ModelConfiguration(
+                "Magnets",
+                schema: schema,
+                isStoredInMemoryOnly: true,
+                cloudKitDatabase: .none
+            )
+        }
+
+        return ModelConfiguration(
+            "Magnets",
+            schema: schema,
+            groupContainer: .identifier(appGroupID),
+            // SwiftData reads the actual iCloud container binding from entitlements.
+            // The app + widget both need Apple Developer provisioning for
+            // iCloud.com.groupthinking.magnets before device sync/sharing is real.
+            cloudKitDatabase: cloudKitEnabled ? .automatic : .none
+        )
+    }
+
+    private static func shouldUseCloudKit(inMemory: Bool) -> Bool {
+        guard !inMemory else {
+            return false
+        }
+
+        #if targetEnvironment(simulator)
+        // Keep simulator builds on the deterministic local store until a signed-in
+        // device is available to validate the real CloudKit path.
+        return false
+        #else
+        return true
+        #endif
     }
 }
 
@@ -92,6 +136,134 @@ enum SharedMediaStore {
         }
 
         return CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+    }
+}
+
+enum CloudKitSyncStatus: Equatable, Sendable {
+    case localOnly
+    case checking
+    case available
+    case noAccount
+    case restricted
+    case temporarilyUnavailable
+    case unavailable(String?)
+
+    var symbolName: String {
+        switch self {
+        case .localOnly:
+            return "icloud.slash"
+        case .checking:
+            return "icloud"
+        case .available:
+            return "icloud.fill"
+        case .noAccount:
+            return "person.crop.circle.badge.exclamationmark"
+        case .restricted:
+            return "exclamationmark.icloud"
+        case .temporarilyUnavailable:
+            return "icloud.bolt"
+        case .unavailable:
+            return "icloud.slash"
+        }
+    }
+
+    var tintColor: Color {
+        switch self {
+        case .available:
+            return Color(hex: "#0AB8A2")
+        case .checking:
+            return Color(hex: "#3E8BFF")
+        case .temporarilyUnavailable:
+            return Color(hex: "#F9A826")
+        case .localOnly, .noAccount, .restricted, .unavailable:
+            return .secondary
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .localOnly:
+            return "Local"
+        case .checking:
+            return "Checking"
+        case .available:
+            return "Synced"
+        case .noAccount:
+            return "No iCloud"
+        case .restricted:
+            return "Restricted"
+        case .temporarilyUnavailable:
+            return "Retrying"
+        case .unavailable:
+            return "Unavailable"
+        }
+    }
+
+    var accessibilityLabel: String {
+        switch self {
+        case .localOnly:
+            return "Cloud sync is using the simulator local fallback"
+        case .checking:
+            return "Checking CloudKit account status"
+        case .available:
+            return "CloudKit account is available"
+        case .noAccount:
+            return "No iCloud account is available for CloudKit"
+        case .restricted:
+            return "CloudKit access is restricted"
+        case .temporarilyUnavailable:
+            return "CloudKit is temporarily unavailable"
+        case let .unavailable(reason):
+            return reason ?? "CloudKit status is unavailable"
+        }
+    }
+}
+
+enum CloudKitStatusProbe {
+    static func currentStatus() async -> CloudKitSyncStatus {
+        #if targetEnvironment(simulator)
+        return .localOnly
+        #else
+        let container = CKContainer(identifier: SharedModelContainer.cloudKitContainerIdentifier)
+
+        return await withCheckedContinuation { continuation in
+            container.accountStatus { accountStatus, error in
+                if let error {
+                    let nsError = error as NSError
+
+                    if nsError.domain == CKErrorDomain,
+                       nsError.code == CKError.notAuthenticated.rawValue {
+                        continuation.resume(returning: .noAccount)
+                        return
+                    }
+
+                    continuation.resume(
+                        returning: .unavailable(error.localizedDescription.trimmedOrNil)
+                    )
+                    return
+                }
+
+                let status: CloudKitSyncStatus
+
+                switch accountStatus {
+                case .available:
+                    status = .available
+                case .noAccount:
+                    status = .noAccount
+                case .restricted:
+                    status = .restricted
+                case .temporarilyUnavailable:
+                    status = .temporarilyUnavailable
+                case .couldNotDetermine:
+                    status = .unavailable("CloudKit could not determine account status.")
+                @unknown default:
+                    status = .unavailable("CloudKit returned an unknown account state.")
+                }
+
+                continuation.resume(returning: status)
+            }
+        }
+        #endif
     }
 }
 

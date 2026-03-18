@@ -6,5 +6,15 @@
 	<array>
 		<string>group.com.magnets.shared</string>
 	</array>
+	<!-- Real CloudKit sync requires this container to exist in Apple Developer
+	     and be attached to the app + widget identifiers before device testing. -->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.com.groupthinking.magnets</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+	</array>
 </dict>
 </plist>
