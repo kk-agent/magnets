@@ -29,6 +29,7 @@
 		AD0000000000000000000029 /* SmallWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000025 /* SmallWidgetView.swift */; };
 		AD000000000000000000002A /* MediumWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000026 /* MediumWidgetView.swift */; };
 		AD000000000000000000002B /* LargeWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000027 /* LargeWidgetView.swift */; };
+		AD000000000000000000002C /* PostToMagnetIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC000000000000000000002A /* PostToMagnetIntent.swift */; };
 		AD0000000000000000000030 /* MagnetsWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000002 /* MagnetsWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -81,6 +82,7 @@
 		AC0000000000000000000027 /* LargeWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeWidgetView.swift; sourceTree = "<group>"; };
 		AC0000000000000000000028 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AC0000000000000000000029 /* MagnetsWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MagnetsWidget.entitlements; sourceTree = "<group>"; };
+		AC000000000000000000002A /* PostToMagnetIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostToMagnetIntent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +164,7 @@
 				AC0000000000000000000022 /* MagnetsWidgetBundle.swift */,
 				AC0000000000000000000023 /* Provider.swift */,
 				AC0000000000000000000024 /* WidgetPushHandler.swift */,
+				AB0000000000000000000008 /* Intents */,
 				AB0000000000000000000007 /* WidgetViews */,
 				AC0000000000000000000028 /* Info.plist */,
 				AC0000000000000000000029 /* MagnetsWidget.entitlements */,
@@ -177,6 +180,14 @@
 				AC0000000000000000000027 /* LargeWidgetView.swift */,
 			);
 			path = WidgetViews;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000008 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				AC000000000000000000002A /* PostToMagnetIntent.swift */,
+			);
+			path = Intents;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -321,6 +332,7 @@
 				AD0000000000000000000029 /* SmallWidgetView.swift in Sources */,
 				AD000000000000000000002A /* MediumWidgetView.swift in Sources */,
 				AD000000000000000000002B /* LargeWidgetView.swift in Sources */,
+				AD000000000000000000002C /* PostToMagnetIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
