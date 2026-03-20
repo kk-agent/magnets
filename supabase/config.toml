@@ -1,0 +1,4 @@
+project_id = "magnets"
+
+[functions.agent-post]
+verify_jwt = false

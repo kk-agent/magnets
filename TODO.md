@@ -47,7 +47,10 @@
   - `pushTokenDidChange` now persists token + widget metadata into App Group JSON
   - Push handler is registered on the widget configuration
 - [x] Add Push Notification entitlement to widget extension
-- [ ] Server-side push: Edge Function to send APNs requests
+- [x] Add local Supabase backend scaffold for future APNs widget push wiring
+  - `supabase/functions/agent-post` validates POST requests, signs APNs JWTs, and can attempt APNs delivery using env-provided test token routing
+  - `supabase/.env.example` and `docs/backend-supabase-agent-post.md` document required env vars and secret handling
+- [ ] Server-side push: Edge Function to send APNs requests end-to-end via real token storage + verified WidgetPushHandler payload
 - [ ] Test: post in app → widget updates within seconds
 - [x] **BUILD before moving on**
 
@@ -80,7 +83,8 @@
 
 ### 2D — Interactive Widgets
 - [x] Deep link from widget tap → specific magnet in app
-- [ ] Widget button: quick-post text directly from widget (iOS 26 interactive)
+- [x] Phase 2D spec drafted in `docs/phase-2d-interactive-widgets.md`
+- [ ] Widget button: quick-post text directly from widget (implemented as one-tap preset actions via AppIntent)
 - [ ] **BUILD + TEST**
 
 ### Phase 2 Verification Checklist
@@ -109,6 +113,11 @@
   - Accepts: `{ magnet_id, content_type, text_content, media_url }`
   - Inserts post into CloudKit (or Supabase mirror)
   - Triggers APNs widget push to all magnet members
+- [x] Local scaffold committed for `POST /functions/v1/agent-post`
+  - POST-only + bearer auth + structured JSON validation implemented
+  - APNs JWT signing + delivery helper implemented with env-based test token routing
+  - Real CloudKit/backend write remains TODO
+  - Final WidgetPushHandler payload + durable token storage remain TODO
 - [ ] OpenClaw skill or cron job: agent posts on schedule
 - [ ] Agent types configurable in-app:
   - Morning briefing agent

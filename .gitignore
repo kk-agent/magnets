@@ -15,6 +15,12 @@ build/
 *.swp
 *~.nib
 
+# Local env files
+.env
+.env.local
+supabase/.env
+supabase/.env.local
+
 # Swift Package Manager
 .build/
 Packages/
