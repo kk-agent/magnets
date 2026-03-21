@@ -1,3 +1,5 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 type CanonicalContentType = "text" | "photo" | "aiGenerated";
 
 type AgentPostPayload = {
@@ -13,8 +15,8 @@ type ValidationIssue = {
   message: string;
 };
 
-type TodoIntegrationResult = {
-  status: "todo" | "sent" | "error";
+type IntegrationResult = {
+  status: "todo" | "stored" | "sent" | "error";
   step: string;
   message: string;
   required_env: string[];
@@ -33,15 +35,13 @@ const jsonHeaders = {
 };
 
 const bearerTokenEnvName = "MAGNETS_AGENT_POST_BEARER_TOKEN";
-const cloudKitContainerEnvName = "MAGNETS_CLOUDKIT_CONTAINER_ID";
-const cloudKitBridgeBaseURLEnvName = "MAGNETS_CLOUDKIT_BRIDGE_BASE_URL";
-const cloudKitManagementTokenEnvName = "MAGNETS_CLOUDKIT_MANAGEMENT_TOKEN";
+const supabaseURLEnvName = "SUPABASE_URL";
+const supabaseServiceRoleKeyEnvName = "SUPABASE_SERVICE_ROLE_KEY";
 const apnsKeyIDEnvName = "MAGNETS_APNS_KEY_ID";
 const apnsTeamIDEnvName = "MAGNETS_APNS_TEAM_ID";
 const apnsTopicEnvName = "MAGNETS_APNS_TOPIC";
 const apnsPrivateKeyEnvName = "MAGNETS_APNS_P8_PRIVATE_KEY";
 const apnsEnvironmentEnvName = "MAGNETS_APNS_ENV";
-const widgetPushTokenMapEnvName = "MAGNETS_WIDGET_PUSH_TOKEN_MAP_JSON";
 
 let cachedAPNsJWT: { token: string; expiresAtMs: number } | null = null;
 
@@ -328,23 +328,84 @@ function getAPNsHost(environment: "production" | "development") {
     : "https://api.sandbox.push.apple.com";
 }
 
-function parseWidgetPushTokenMap(raw: string | undefined) {
-  if (!raw) return {} as Record<string, string[]>;
+function dedupeStrings(values: string[]) {
+  return [...new Set(values)];
+}
 
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    return Object.fromEntries(
-      Object.entries(parsed).flatMap(([magnetID, value]) => {
-        if (!Array.isArray(value)) return [];
-        const tokens = value.filter((entry): entry is string => {
-          return typeof entry === "string" && entry.trim().length > 0;
-        }).map((entry) => entry.trim());
-        return [[magnetID, tokens]];
-      }),
-    );
-  } catch {
-    return {} as Record<string, string[]>;
+function getSupabaseAdminClient() {
+  const supabaseURL = Deno.env.get(supabaseURLEnvName)?.trim();
+  const serviceRoleKey = Deno.env.get(supabaseServiceRoleKeyEnvName)?.trim();
+  const missingEnv = [
+    !supabaseURL ? supabaseURLEnvName : null,
+    !serviceRoleKey ? supabaseServiceRoleKeyEnvName : null,
+  ].filter((value): value is string => Boolean(value));
+
+  if (missingEnv.length > 0) {
+    return {
+      ok: false as const,
+      required_env: missingEnv,
+    };
   }
+
+  return {
+    ok: true as const,
+    client: createClient(supabaseURL!, serviceRoleKey!, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }),
+  };
+}
+
+async function getWidgetPushTokens(
+  magnetID: string,
+): Promise<
+  | { ok: true; deviceTokens: string[] }
+  | { ok: false; required_env: string[]; details: unknown }
+> {
+  const supabaseAdmin = getSupabaseAdminClient();
+  if (!supabaseAdmin.ok) {
+    return {
+      ok: false,
+      required_env: supabaseAdmin.required_env,
+      details: { reason: "missing_supabase_env" },
+    };
+  }
+
+  const { data, error } = await supabaseAdmin.client
+    .from("widget_push_tokens")
+    .select("device_token")
+    .eq("magnet_id", magnetID)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    return {
+      ok: false,
+      required_env: [supabaseURLEnvName, supabaseServiceRoleKeyEnvName],
+      details: {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      },
+    };
+  }
+
+  return {
+    ok: true,
+    deviceTokens: dedupeStrings(
+      (data ?? []).flatMap((row) => {
+        if (
+          typeof row.device_token !== "string" ||
+          row.device_token.trim().length === 0
+        ) {
+          return [];
+        }
+        return [row.device_token.trim()];
+      }),
+    ),
+  };
 }
 
 function buildAPNsPayload(payload: AgentPostPayload) {
@@ -366,61 +427,115 @@ function tokenSuffix(token: string) {
 }
 
 async function writePostToBackend(
-  _payload: AgentPostPayload,
-): Promise<TodoIntegrationResult> {
-  // TODO(magnets-backend): Replace this stub with the real write path.
-  // Expected options:
-  // 1. POST into a CloudKit bridge that owns Apple server-to-server auth.
-  // 2. Write into a mirrored backend table that later syncs into CloudKit.
+  payload: AgentPostPayload,
+): Promise<IntegrationResult> {
+  const supabaseAdmin = getSupabaseAdminClient();
+  if (!supabaseAdmin.ok) {
+    return {
+      status: "error",
+      step: "backend_write",
+      message:
+        "Supabase admin client is not configured. Provide SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      required_env: supabaseAdmin.required_env,
+    };
+  }
+
+  const postRecord = {
+    magnet_id: payload.magnet_id,
+    content_type: payload.content_type,
+    text_content: payload.text_content,
+    media_url: payload.media_url,
+    author_name: payload.author_name,
+    created_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabaseAdmin.client
+    .from("posts")
+    .insert(postRecord)
+    .select(
+      "magnet_id, content_type, text_content, media_url, author_name, created_at",
+    )
+    .single();
+
+  if (error) {
+    return {
+      status: "error",
+      step: "backend_write",
+      message: "Failed to persist the post to the Supabase posts table.",
+      required_env: [supabaseURLEnvName, supabaseServiceRoleKeyEnvName],
+      details: {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      },
+    };
+  }
+
   return {
-    status: "todo",
+    status: "stored",
     step: "backend_write",
-    message:
-      "Accepted payload only. Backend persistence is not implemented yet; wire this to CloudKit or a CloudKit bridge.",
-    required_env: [
-      cloudKitContainerEnvName,
-      cloudKitBridgeBaseURLEnvName,
-      cloudKitManagementTokenEnvName,
-    ],
+    message: "Post persisted to the Supabase posts table.",
+    required_env: [supabaseURLEnvName, supabaseServiceRoleKeyEnvName],
+    details: data ?? postRecord,
   };
 }
 
 async function sendWidgetPush(
   payload: AgentPostPayload,
-): Promise<TodoIntegrationResult> {
+): Promise<IntegrationResult> {
   const keyID = Deno.env.get(apnsKeyIDEnvName);
   const teamID = Deno.env.get(apnsTeamIDEnvName);
   const topic = Deno.env.get(apnsTopicEnvName);
   const privateKey = Deno.env.get(apnsPrivateKeyEnvName);
+  const supabaseAdmin = getSupabaseAdminClient();
+  const requiredEnv = dedupeStrings([
+    !keyID ? apnsKeyIDEnvName : "",
+    !teamID ? apnsTeamIDEnvName : "",
+    !topic ? apnsTopicEnvName : "",
+    !privateKey ? apnsPrivateKeyEnvName : "",
+    ...(supabaseAdmin.ok ? [] : supabaseAdmin.required_env),
+  ].filter((value): value is string => value.length > 0));
 
-  if (!keyID || !teamID || !topic || !privateKey) {
+  if (requiredEnv.length > 0) {
     return {
       status: "todo",
       step: "widget_push",
       message:
-        "APNs auth is not fully configured yet. Provide key id, team id, topic, and the .p8 private key contents as secrets.",
-      required_env: [
-        apnsKeyIDEnvName,
-        apnsTeamIDEnvName,
-        apnsTopicEnvName,
-        apnsPrivateKeyEnvName,
-        widgetPushTokenMapEnvName,
-      ],
+        "APNs delivery or Supabase token lookup is not fully configured yet. Provide the missing env vars as hosted or local secrets.",
+      required_env: requiredEnv,
     };
   }
 
-  const tokenMap = parseWidgetPushTokenMap(
-    Deno.env.get(widgetPushTokenMapEnvName),
-  );
-  const deviceTokens = tokenMap[payload.magnet_id] ?? [];
+  const tokenLookup = await getWidgetPushTokens(payload.magnet_id);
+  if (!tokenLookup.ok) {
+    return {
+      status: "error",
+      step: "widget_push",
+      message:
+        "Failed to load widget push tokens from the Supabase widget_push_tokens table.",
+      required_env: tokenLookup.required_env,
+      details: {
+        magnet_id: payload.magnet_id,
+        ...(
+          typeof tokenLookup.details === "object" &&
+            tokenLookup.details !== null
+            ? tokenLookup.details
+            : { details: tokenLookup.details }
+        ),
+      },
+    };
+  }
+
+  const deviceTokens = tokenLookup.deviceTokens;
 
   if (deviceTokens.length === 0) {
     return {
       status: "todo",
       step: "widget_push",
       message:
-        "APNs signing is wired, but no push tokens are registered for this magnet_id yet. Populate MAGNETS_WIDGET_PUSH_TOKEN_MAP_JSON for testing or replace it with real token storage.",
-      required_env: [widgetPushTokenMapEnvName],
+        "APNs signing is wired, but no widget_push_tokens rows are registered for this magnet_id yet.",
+      required_env: [supabaseURLEnvName, supabaseServiceRoleKeyEnvName],
       details: {
         magnet_id: payload.magnet_id,
       },
@@ -431,7 +546,7 @@ async function sendWidgetPush(
     Deno.env.get(apnsEnvironmentEnvName),
   );
   const host = getAPNsHost(environment);
-  const jwt = await getAPNsJWT(teamID, keyID, privateKey);
+  const jwt = await getAPNsJWT(teamID!, keyID!, privateKey!);
   const body = JSON.stringify(buildAPNsPayload(payload));
 
   const attempts: APNsAttempt[] = [];
@@ -441,7 +556,7 @@ async function sendWidgetPush(
         method: "POST",
         headers: {
           authorization: `bearer ${jwt}`,
-          "apns-topic": topic,
+          "apns-topic": topic!,
           "apns-push-type": "background",
           "apns-priority": "5",
           "content-type": "application/json",
@@ -478,7 +593,8 @@ async function sendWidgetPush(
         apnsTopicEnvName,
         apnsPrivateKeyEnvName,
         apnsEnvironmentEnvName,
-        widgetPushTokenMapEnvName,
+        supabaseURLEnvName,
+        supabaseServiceRoleKeyEnvName,
       ],
       details: {
         environment,
@@ -491,14 +607,15 @@ async function sendWidgetPush(
     status: "sent",
     step: "widget_push",
     message:
-      "APNs requests were signed and sent. This uses a generic silent push payload plus an env-based token map for now; final WidgetPushHandler payload semantics may still need refinement.",
+      "APNs requests were signed and sent using widget/device tokens loaded from Supabase. Final WidgetPushHandler payload semantics may still need refinement.",
     required_env: [
       apnsKeyIDEnvName,
       apnsTeamIDEnvName,
       apnsTopicEnvName,
       apnsPrivateKeyEnvName,
       apnsEnvironmentEnvName,
-      widgetPushTokenMapEnvName,
+      supabaseURLEnvName,
+      supabaseServiceRoleKeyEnvName,
     ],
     details: {
       environment,
@@ -582,10 +699,10 @@ Deno.serve(async (request) => {
       widget_push: widgetPush,
     },
     notes: [
-      "Backend persistence is still a stub.",
-      "APNs signing + delivery are now wired, but token lookup is still env-based for testing.",
+      "Backend persistence now inserts into the Supabase posts table.",
+      "Widget/device tokens are loaded from the Supabase widget_push_tokens table before APNs delivery.",
       "The APNs payload is currently a generic silent push scaffold and may need refinement for the exact WidgetPushHandler contract.",
-      "Do not store secrets in the repo and do not use a CloudKit User Token here.",
+      "Do not store secrets in the repo.",
     ],
   });
 });

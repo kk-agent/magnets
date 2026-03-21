@@ -2,9 +2,10 @@
 
 ## Status
 - Added a non-deployed Supabase Edge Function scaffold at `supabase/functions/agent-post/index.ts`.
-- Current behavior: validate request, enforce bearer auth, return structured JSON, and expose explicit backend/APNs integration status in the response.
+- Current behavior: validate request, enforce bearer auth, persist the post into Supabase, and expose explicit backend/APNs integration status in the response.
 - Real APNs signing + delivery are now wired.
-- Current non-goals: no real CloudKit write path yet, no durable server-side token store yet, no deployment, no real secrets committed.
+- Widget/device token lookup now reads from a Supabase table instead of an env var map.
+- Current non-goals: no deployment, no real secrets committed.
 
 ## Request Contract
 - Method: `POST` only
@@ -32,40 +33,37 @@ See `supabase/.env.example` for placeholders.
 | Variable | Required | Purpose |
 |---|---|---|
 | `MAGNETS_AGENT_POST_BEARER_TOKEN` | Yes | Shared bearer token for the endpoint |
-| `MAGNETS_CLOUDKIT_CONTAINER_ID` | Yes | CloudKit container identifier, currently `iCloud.com.groupthinking.magnets` |
-| `MAGNETS_CLOUDKIT_BRIDGE_BASE_URL` | Yes for real backend write | Future backend/CloudKit bridge base URL |
-| `MAGNETS_CLOUDKIT_MANAGEMENT_TOKEN` | Optional | Schema/config automation token if you later automate CloudKit management tasks |
-| `MAGNETS_APNS_KEY_ID` | Yes for real APNs send | Apple APNs auth key id (`U43LDC7HYX`) |
+| `SUPABASE_URL` | Yes | Supabase project URL used by the edge function admin client |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service-role key used to write `posts` and read `widget_push_tokens` |
+| `MAGNETS_APNS_KEY_ID` | Yes for real APNs send | Apple APNs auth key id (`GJSN7LZ8SP`) |
 | `MAGNETS_APNS_TEAM_ID` | Yes for real APNs send | Apple Developer team id (`6DR32PXU4V`) |
 | `MAGNETS_APNS_TOPIC` | Yes for real APNs send | Widget push topic; current bundle id is `com.groupthinking.magnets.widget` |
 | `MAGNETS_APNS_ENV` | Recommended | `development` (default) or `production` APNs host selection |
 | `MAGNETS_APNS_P8_PRIVATE_KEY` | Yes for real APNs send | Contents of the APNs `.p8` private key, stored only as a local or hosted secret |
-| `MAGNETS_WIDGET_PUSH_TOKEN_MAP_JSON` | Yes for current test path | Temporary JSON map of `magnet_id -> [pushToken]` for early APNs testing |
 
 ## Secret Handling Rules
 - Do not commit secrets.
 - Do not paste secrets into docs, source, examples, or git history.
-- Do not ask for or use a CloudKit User Token. That token is tied to an end-user session and is not the right primitive for this server-side path.
-- Rotate the CloudKit management token that was pasted into chat earlier; treat chat history as exposed.
-- If CloudKit server-side automation is needed later, use a dedicated management/server token flow, not an end-user token.
+- The local APNs `.p8` file currently lives at `~/.config/gcp-secrets/AuthKey_GJSN7LZ8SP.p8`; load it into local or hosted secret storage, but never commit the file contents.
 
 ## What Works Now
 1. Payload validation
 2. Bearer auth
-3. APNs JWT signing with the `.p8` private key
-4. APNs request delivery to Apple using `fetch`
-5. Structured per-token delivery results in the JSON response
+3. Post persistence into the `posts` table
+4. Widget/device token lookup from the `widget_push_tokens` table
+5. APNs JWT signing with the `.p8` private key
+6. APNs request delivery to Apple using `fetch`
+7. Structured per-token delivery results in the JSON response
 
 ## What Still Does Not Work End-to-End
-1. The function does **not** persist posts anywhere yet.
-2. The function does **not** look up widget/device tokens from a real database yet.
-3. The APNs payload is currently a **generic silent-push scaffold**. It may need adjustment once the exact `WidgetPushHandler` server payload contract is finalized.
+1. The APNs payload is currently a **generic silent-push scaffold**. It may need adjustment once the exact `WidgetPushHandler` server payload contract is finalized.
+2. This repo change does not deploy the function or provision hosted secrets automatically.
 
 ## Wiring Plan When Infra Exists
 1. Copy `supabase/.env.example` to an untracked local env file such as `supabase/.env.local`.
 2. Replace placeholders locally or in hosted secret storage only.
-3. Replace `MAGNETS_WIDGET_PUSH_TOKEN_MAP_JSON` with real token storage keyed by `magnet_id`.
-4. Implement the `writePostToBackend` stub in `supabase/functions/agent-post/index.ts`.
+3. Apply `supabase/migrations/001_initial_schema.sql` so `posts` and `widget_push_tokens` exist before invoking the edge function.
+4. Load widget/device tokens into `widget_push_tokens`, keyed by `magnet_id`.
 5. Verify the exact WidgetPushHandler APNs payload shape on a physical device and tune the payload builder accordingly.
 6. When ready, deploy the function through normal Supabase workflows. This repo change does not deploy anything.
 
@@ -73,4 +71,4 @@ See `supabase/.env.example` for placeholders.
 - `deno check supabase/functions/agent-post/index.ts`
 - `deno fmt --check supabase/functions/agent-post/index.ts`
 
-Those commands only validate the scaffold locally; they do not hit CloudKit, APNs, or Supabase hosted infrastructure.
+Those commands only validate the scaffold locally; they do not hit APNs or Supabase hosted infrastructure.
