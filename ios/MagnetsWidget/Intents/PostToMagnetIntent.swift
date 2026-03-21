@@ -24,7 +24,7 @@ struct PostToMagnetIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let trimmedMessage = quickMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedMessage = normalizedQuickMessage(quickMessage)
 
         guard !trimmedMessage.isEmpty else {
             return .result(dialog: IntentDialog("Quick post was empty."))
@@ -61,6 +61,19 @@ struct PostToMagnetIntent: AppIntent {
             return .result(dialog: IntentDialog("Posted \(trimmedMessage) to \(magnet.name)."))
         } catch {
             return .result(dialog: IntentDialog("Couldn't post right now."))
+        }
+    }
+
+    private func normalizedQuickMessage(_ message: String) -> String {
+        let trimmedMessage = message.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        switch trimmedMessage {
+        case "👋":
+            return "👋 Wave"
+        case "❤️":
+            return "❤️ Sent love"
+        default:
+            return trimmedMessage
         }
     }
 }

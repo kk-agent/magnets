@@ -50,7 +50,7 @@ struct CreateMagnetView: View {
                     }
 
                     HStack(spacing: 12) {
-                        previewChip(title: "App Group", subtitle: SharedModelContainer.appGroupID, icon: "square.stack.3d.up.fill")
+                        previewChip(title: "Shared Space", subtitle: "Syncs across devices", icon: "icloud.fill")
                         previewChip(title: "Invite", subtitle: "8-char code", icon: "link.badge.plus")
                     }
 

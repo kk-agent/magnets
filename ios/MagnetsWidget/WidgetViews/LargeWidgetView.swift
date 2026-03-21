@@ -69,14 +69,14 @@ struct LargeWidgetView: View {
         HStack(spacing: 10) {
             quickPostButton(
                 magnetID: magnetID,
-                quickMessage: "👋",
+                quickMessage: "👋 Wave",
                 title: "Wave",
                 systemImage: "hand.wave.fill"
             )
 
             quickPostButton(
                 magnetID: magnetID,
-                quickMessage: "❤️",
+                quickMessage: "❤️ Sent love",
                 title: "Send love",
                 systemImage: "heart.fill"
             )
@@ -91,17 +91,18 @@ struct LargeWidgetView: View {
     ) -> some View {
         Button(intent: PostToMagnetIntent(magnetID: magnetID.uuidString, quickMessage: quickMessage)) {
             HStack(spacing: 10) {
-                Text(quickMessage)
-                    .font(.body)
-
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
 
-                    Text("Post instantly")
+                    Text("Post")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.68))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
 
                 Spacer(minLength: 8)

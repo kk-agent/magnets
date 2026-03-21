@@ -113,14 +113,13 @@ struct MediumWidgetView: View {
     }
 
     private func quickPostButton(for magnetID: UUID) -> some View {
-        Button(intent: PostToMagnetIntent(magnetID: magnetID.uuidString, quickMessage: "👋")) {
+        Button(intent: PostToMagnetIntent(magnetID: magnetID.uuidString, quickMessage: "👋 Wave")) {
             HStack(spacing: 10) {
-                Text("👋")
-                    .font(.body)
-
                 Text("Quick post")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
                 Spacer(minLength: 8)
 

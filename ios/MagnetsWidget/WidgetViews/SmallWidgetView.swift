@@ -38,6 +38,14 @@ struct SmallWidgetView: View {
                         .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundStyle(.white)
                         .lineLimit(5)
+
+                    HStack {
+                        Text(post.authorName)
+                        Spacer()
+                        Text(post.createdAt, style: .time)
+                    }
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.62))
                 }
                 .padding(14)
             } else {
