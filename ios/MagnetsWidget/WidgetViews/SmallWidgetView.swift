@@ -6,7 +6,7 @@ struct SmallWidgetView: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            if let post = entry.latestPost, let image = SharedMediaStore.loadCGImage(from: post.mediaURL) {
+            if let post = entry.latestPost, let image = SharedMediaStore.loadCGImage(from: post.mediaURL, maxPixelSize: 420) {
                 Image(decorative: image, scale: 1, orientation: .up)
                     .resizable()
                     .scaledToFill()

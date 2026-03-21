@@ -484,11 +484,11 @@ private enum AIComposeError: LocalizedError {
 private enum AIComposeService {
     static var availability: AIComposeAvailability {
         #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 18.0, *) {
             return AIComposeAvailability(systemAvailability: SystemLanguageModel.default.availability)
         }
 
-        return AIComposeAvailability(state: .unavailable("Requires iOS 26 or newer."))
+        return AIComposeAvailability(state: .unavailable("Requires iOS 18 or newer."))
         #else
         return AIComposeAvailability(state: .unsupportedFramework)
         #endif
@@ -517,7 +517,7 @@ private enum AIComposeService {
         }
 
         #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 18.0, *) {
             let session = LanguageModelSession(
                 model: SystemLanguageModel.default,
                 instructions: """
@@ -571,7 +571,7 @@ private enum AIComposeService {
 }
 
 #if canImport(FoundationModels)
-@available(iOS 26.0, *)
+@available(iOS 18.0, *)
 private extension AIComposeAvailability {
     init(systemAvailability: SystemLanguageModel.Availability) {
         switch systemAvailability {

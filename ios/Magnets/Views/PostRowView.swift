@@ -5,7 +5,7 @@ struct PostRowView: View {
     let post: Post
 
     private var mediaImage: CGImage? {
-        SharedMediaStore.loadCGImage(from: post.mediaURL)
+        SharedMediaStore.loadCGImage(from: post.mediaURL, maxPixelSize: 900)
     }
 
     var body: some View {

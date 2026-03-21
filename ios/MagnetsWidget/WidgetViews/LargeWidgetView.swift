@@ -149,7 +149,7 @@ private struct LargeFeedRow: View {
 
     @ViewBuilder
     private var thumbnail: some View {
-        if let image = SharedMediaStore.loadCGImage(from: post.mediaURL) {
+        if let image = SharedMediaStore.loadCGImage(from: post.mediaURL, maxPixelSize: 180) {
             Image(decorative: image, scale: 1, orientation: .up)
                 .resizable()
                 .scaledToFill()

@@ -8,6 +8,7 @@ struct CreateMagnetView: View {
 
     @FocusState private var isNameFocused: Bool
     @State private var magnetName = ""
+    @State private var errorMessage: String?
 
     private var trimmedName: String {
         magnetName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -79,6 +80,14 @@ struct CreateMagnetView: View {
         .presentationDetents([.medium, .large])
         .presentationCornerRadius(32)
         .presentationDragIndicator(.visible)
+        .alert("Unable to Create Magnet", isPresented: Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "Please try again.")
+        }
         .onAppear {
             isNameFocused = true
         }
@@ -116,7 +125,10 @@ struct CreateMagnetView: View {
             WidgetCenter.shared.reloadAllTimelines()
             dismiss()
         } catch {
+            #if DEBUG
             assertionFailure("Unable to save magnet: \(error)")
+            #endif
+            errorMessage = "We couldn’t save that Magnet. Please try again."
         }
     }
 }

@@ -102,6 +102,11 @@ enum SharedModelContainer {
 
 enum SharedMediaStore {
     static let mediaFolderName = "Media"
+    nonisolated(unsafe) private static let imageCache: NSCache<NSString, CGImage> = {
+        let cache = NSCache<NSString, CGImage>()
+        cache.countLimit = 60
+        return cache
+    }()
 
     static func saveImageData(_ data: Data) throws -> String {
         let directoryURL = SharedModelContainer.groupContainerURL
@@ -128,14 +133,42 @@ enum SharedMediaStore {
         return SharedModelContainer.groupContainerURL.appendingPathComponent(relativePath)
     }
 
-    static func loadCGImage(from relativePath: String?) -> CGImage? {
-        guard let fileURL = fileURL(for: relativePath),
-              let imageSource = CGImageSourceCreateWithURL(fileURL as CFURL, nil)
-        else {
+    static func loadCGImage(from relativePath: String?, maxPixelSize: Int? = nil) -> CGImage? {
+        guard let relativePath, let fileURL = fileURL(for: relativePath) else {
             return nil
         }
 
-        return CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+        let cacheKey = cacheKey(for: relativePath, maxPixelSize: maxPixelSize)
+        if let cachedImage = imageCache.object(forKey: cacheKey) {
+            return cachedImage
+        }
+
+        guard let imageSource = CGImageSourceCreateWithURL(fileURL as CFURL, nil) else {
+            return nil
+        }
+
+        let image: CGImage?
+        if let maxPixelSize {
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+            ]
+            image = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options as CFDictionary)
+        } else {
+            image = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+        }
+
+        if let image {
+            imageCache.setObject(image, forKey: cacheKey)
+        }
+
+        return image
+    }
+
+    private static func cacheKey(for relativePath: String, maxPixelSize: Int?) -> NSString {
+        let suffix = maxPixelSize.map { "thumb-\($0)" } ?? "full"
+        return "\(relativePath)|\(suffix)" as NSString
     }
 }
 
