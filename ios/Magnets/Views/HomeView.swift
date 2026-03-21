@@ -359,10 +359,10 @@ private struct MissingMagnetLandingView: View {
                 .font(.system(size: 38, weight: .semibold))
                 .foregroundStyle(Color(hex: "#4B43E8"))
 
-            Text("This Magnet isn’t on this device yet.")
+            Text("This Magnet isn’t available on this device yet.")
                 .font(.title2.weight(.bold))
 
-            Text("The widget opened a direct route, but this device does not have that Magnet yet. The CloudKit path is now wired, but real cross-device resolution still needs Apple Developer container provisioning and an iCloud-signed device.")
+            Text("Make sure you’re signed into iCloud on this device, then try again.")
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -446,7 +446,7 @@ private struct JoinMagnetView: View {
                     Text("Join a Magnet")
                         .font(.system(size: 30, weight: .bold, design: .rounded))
 
-                    Text("Paste an invite code or a `magnets://join/<code>` link. If this device already has that Magnet locally, the route opens immediately.")
+                    Text("Paste an invite code or open a shared link to join a Magnet.")
                         .foregroundStyle(.secondary)
                 }
 
@@ -503,7 +503,7 @@ private struct JoinMagnetView: View {
                         Text(matchingMagnet.name)
                             .font(.title3.weight(.bold))
 
-                        Text("Invite code \(matchingMagnet.inviteCode) is already in this shared store.")
+                        Text("\(matchingMagnet.name) is already available on this device.")
                             .foregroundStyle(.secondary)
 
                         Button {
@@ -523,14 +523,14 @@ private struct JoinMagnetView: View {
                     }
                 } else if hasAttemptedLookup, !normalizedInviteCode.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        Label("CloudKit groundwork is ready", systemImage: "icloud")
+                        Label("Not on this device yet", systemImage: "icloud")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(Color(hex: "#3E8BFF"))
 
-                        Text("This device does not have a local Magnet for \(normalizedInviteCode).")
+                        Text("We couldn't find that Magnet on this device yet.")
                             .font(.headline.weight(.semibold))
 
-                        Text("Real cross-device joins still need the Apple Developer iCloud container, both entitlements, and a signed-in physical device. Until then, the simulator stays local-only on purpose.")
+                        Text("Cross-device sharing requires iCloud sign-in on both devices.")
                             .foregroundStyle(.secondary)
                     }
                     .padding(20)
@@ -545,7 +545,7 @@ private struct JoinMagnetView: View {
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(Color(hex: "#4B43E8"))
 
-                        Text("Deep links now resolve into this join flow, and local invite matches can open the right Magnet immediately.")
+                        Text("Paste a code from a friend to get started.")
                             .foregroundStyle(.secondary)
                     }
                     .padding(20)

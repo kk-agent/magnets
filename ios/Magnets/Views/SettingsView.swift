@@ -12,33 +12,11 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     heroCard
 
-                    widgetPushDebugCard
+                    widgetStatusCard
 
-                    VStack(alignment: .leading, spacing: 14) {
-                        settingsRow(
-                            title: "Shared container",
-                            subtitle: SharedModelContainer.appGroupID,
-                            icon: "square.stack.3d.up.fill"
-                        )
+                    connectedAgentsCard
 
-                        settingsRow(
-                            title: "Phase 2 push refresh",
-                            subtitle: "WidgetKit push state now persists to App Group JSON for app-side inspection.",
-                            icon: "bolt.badge.clock.fill"
-                        )
-
-                        settingsRow(
-                            title: "Deep link routing",
-                            subtitle: "Widget taps now route into a specific Magnet or reserved invite path.",
-                            icon: "arrowshape.turn.up.right.fill"
-                        )
-                    }
-                    .padding(18)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .strokeBorder(.white.opacity(0.22), lineWidth: 1)
-                    }
+                    aboutCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -65,13 +43,13 @@ struct SettingsView: View {
 
     private var heroCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Phase 2A wiring is live.")
+            Text("Keep your Magnets close.")
                 .font(.system(size: 30, weight: .bold, design: .rounded))
 
-            Text("The widget can now publish its push token into the shared container, the app can inspect that state, and deep links have a real landing path.")
+            Text("Magnets keeps shared notes, photos, and future agent updates one glance away on your Home Screen.")
                 .foregroundStyle(.secondary)
 
-            Label("CloudKit-shaped models, App Group JSON, widget tap routing", systemImage: "checkmark.seal.fill")
+            Label(heroStatusCopy, systemImage: heroStatusIcon)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Color(hex: "#4B43E8"))
         }
@@ -94,68 +72,108 @@ struct SettingsView: View {
         }
     }
 
-    private var widgetPushDebugCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Widget Push Debug")
-                        .font(.title3.weight(.bold))
+    private var widgetStatusCard: some View {
+        glassCard {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Widget Status")
+                            .font(.title3.weight(.bold))
 
-                    Text("Read from the shared App Group state so the app and widget are looking at the same token snapshot.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        Text("Add Magnets to your Home Screen for quicker updates and one-tap access.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        Task {
+                            await refreshPushState()
+                        }
+                    } label: {
+                        if isRefreshingPushState {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.headline.weight(.semibold))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color(hex: "#4B43E8"))
                 }
 
-                Spacer()
+                VStack(spacing: 12) {
+                    statusRow(
+                        title: "Status",
+                        value: widgetStatusTitle,
+                        detail: widgetStatusDetail
+                    )
 
-                Button {
-                    Task {
-                        await refreshPushState()
-                    }
-                } label: {
-                    if isRefreshingPushState {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.headline.weight(.semibold))
-                    }
+                    statusRow(
+                        title: "Active widgets",
+                        value: activeWidgetCountLabel,
+                        detail: widgetConfigurationDetail
+                    )
+
+                    statusRow(
+                        title: "Last setup update",
+                        value: lastWidgetUpdateLabel,
+                        detail: lastWidgetUpdateDetail
+                    )
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color(hex: "#4B43E8"))
-            }
-
-            VStack(spacing: 12) {
-                debugRow(
-                    title: "Push token",
-                    value: widgetPushState.hasPushToken ? "Captured" : "Waiting",
-                    detail: widgetPushState.tokenPreview ?? "No token saved yet."
-                )
-
-                debugRow(
-                    title: "Known widgets",
-                    value: "\(widgetPushState.widgets.count)",
-                    detail: widgetPushState.widgets.isEmpty
-                        ? "No active widget configurations recorded yet."
-                        : widgetFamilySummary
-                )
-
-                debugRow(
-                    title: "Last token update",
-                    value: widgetPushState.lastTokenUpdateAt.map {
-                        $0.formatted(date: .abbreviated, time: .shortened)
-                    } ?? "Not yet",
-                    detail: widgetPushState.lastTokenUpdateAt == nil
-                        ? "This fills in after WidgetKit hands back a push token."
-                        : "Timestamp is preserved until the token rotates again."
-                )
             }
         }
-        .padding(20)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(.white.opacity(0.22), lineWidth: 1)
+    }
+
+    private var connectedAgentsCard: some View {
+        glassCard {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Connected Agents")
+                    .font(.title3.weight(.bold))
+
+                Label("No agents connected", systemImage: "sparkles")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color(hex: "#4B43E8"))
+
+                Text("Agent posting is coming soon. You'll be able to connect a helper to a Magnet for scheduled updates, daily briefs, and other automatic posts.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var aboutCard: some View {
+        glassCard {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("About")
+                    .font(.title3.weight(.bold))
+
+                settingsRow(
+                    title: "App version",
+                    subtitle: appVersionLabel,
+                    icon: "info.circle.fill"
+                )
+
+                settingsRow(
+                    title: "Sharing",
+                    subtitle: "Share a code or link to invite friends to a Magnet.",
+                    icon: "link.badge.plus"
+                )
+
+                settingsRow(
+                    title: "iCloud",
+                    subtitle: "Sign into iCloud to keep your Magnets available across your Apple devices.",
+                    icon: "icloud.fill"
+                )
+
+                settingsRow(
+                    title: "Widgets",
+                    subtitle: "Home Screen widgets show the latest post and open straight back into the app.",
+                    icon: "rectangle.stack.badge.person.crop.fill"
+                )
+            }
         }
     }
 
@@ -180,6 +198,16 @@ struct SettingsView: View {
         }
     }
 
+    private func glassCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(20)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .strokeBorder(.white.opacity(0.22), lineWidth: 1)
+            }
+    }
+
     private var backgroundView: some View {
         LinearGradient(
             colors: [
@@ -194,8 +222,12 @@ struct SettingsView: View {
     }
 
     private var widgetFamilySummary: String {
-        widgetPushState.widgets
-            .map(\.family)
+        Array(
+            Set(
+                widgetPushState.widgets
+                    .map { widgetFamilyName(for: $0.family) }
+            )
+        )
             .sorted()
             .joined(separator: " • ")
     }
@@ -208,7 +240,7 @@ struct SettingsView: View {
         widgetPushState = await WidgetPushStateStore.refreshFromSystem()
     }
 
-    private func debugRow(title: String, value: String, detail: String) -> some View {
+    private func statusRow(title: String, value: String, detail: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -229,5 +261,84 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Color.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var heroStatusCopy: String {
+        widgetPushState.widgets.isEmpty
+            ? "Add a widget to your Home Screen for quick access."
+            : "Home Screen widgets are active on this device."
+    }
+
+    private var heroStatusIcon: String {
+        widgetPushState.widgets.isEmpty ? "plus.circle.fill" : "checkmark.seal.fill"
+    }
+
+    private var widgetStatusTitle: String {
+        if widgetPushState.hasPushToken, !widgetPushState.widgets.isEmpty {
+            return "Ready"
+        }
+
+        if !widgetPushState.widgets.isEmpty {
+            return "Finishing setup"
+        }
+
+        return "Not added yet"
+    }
+
+    private var widgetStatusDetail: String {
+        if widgetPushState.hasPushToken, !widgetPushState.widgets.isEmpty {
+            return "Your widget is connected and ready for faster refreshes on this device."
+        }
+
+        if !widgetPushState.widgets.isEmpty {
+            return "Open the widget once and Magnets will finish registering it automatically."
+        }
+
+        return "Add a Magnets widget to your Home Screen to enable quicker updates."
+    }
+
+    private var activeWidgetCountLabel: String {
+        widgetPushState.widgets.count == 1
+            ? "1 widget"
+            : "\(widgetPushState.widgets.count) widgets"
+    }
+
+    private var widgetConfigurationDetail: String {
+        widgetPushState.widgets.isEmpty
+            ? "No Magnets widgets are currently configured on this device."
+            : widgetFamilySummary
+    }
+
+    private var lastWidgetUpdateLabel: String {
+        widgetPushState.lastTokenUpdateAt.map {
+            $0.formatted(date: .abbreviated, time: .shortened)
+        } ?? "Not yet"
+    }
+
+    private var lastWidgetUpdateDetail: String {
+        widgetPushState.lastTokenUpdateAt == nil
+            ? "Once a widget is added, Magnets will keep this status up to date automatically."
+            : "This is the most recent widget registration seen by the app."
+    }
+
+    private var appVersionLabel: String {
+        let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        let buildNumber = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+        return "Version \(shortVersion) (\(buildNumber))"
+    }
+
+    private func widgetFamilyName(for family: String) -> String {
+        switch family {
+        case "systemSmall":
+            return "Small"
+        case "systemMedium":
+            return "Medium"
+        case "systemLarge":
+            return "Large"
+        case "systemExtraLarge":
+            return "Extra Large"
+        default:
+            return family
+        }
     }
 }

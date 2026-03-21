@@ -397,7 +397,7 @@
 				CODE_SIGN_ENTITLEMENTS = Magnets/Magnets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6DR32PXU4V;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Magnets/Info.plist;
@@ -419,7 +419,7 @@
 				CODE_SIGN_ENTITLEMENTS = Magnets/Magnets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6DR32PXU4V;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Magnets/Info.plist;
@@ -441,7 +441,7 @@
 				CODE_SIGN_ENTITLEMENTS = MagnetsWidget/MagnetsWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6DR32PXU4V;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MagnetsWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -464,7 +464,7 @@
 				CODE_SIGN_ENTITLEMENTS = MagnetsWidget/MagnetsWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6DR32PXU4V;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MagnetsWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

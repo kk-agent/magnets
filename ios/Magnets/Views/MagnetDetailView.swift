@@ -929,7 +929,7 @@ private struct InviteView: View {
             Text("Share \(magnet.name)")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
 
-            Text("Anyone with the invite code or deep link can land in the join flow. Real multi-device access still depends on CloudKit provisioning + iCloud sign-in.")
+            Text("Share this code or link to invite friends to your Magnet.")
                 .foregroundStyle(.secondary)
 
             Text(magnet.inviteCode)
@@ -956,7 +956,7 @@ private struct InviteView: View {
             Text("QR code")
                 .font(.headline.weight(.bold))
 
-            Text("This encodes the `magnets://join/<code>` route so the app can jump straight into the join flow.")
+            Text("Scan this code on another device to open the invite.")
                 .foregroundStyle(.secondary)
 
             InviteQRCodeView(payload: inviteLinkString)
