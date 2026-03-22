@@ -33,6 +33,7 @@
 		AD0000000000000000000030 /* MagnetsWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000002 /* MagnetsWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AD0000000000000000000031 /* MagnetsDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */; };
 		AD0000000000000000000032 /* WidgetPushStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000033 /* WidgetPushStateTests.swift */; };
+		AD0000000000000000000040 /* SharedMediaStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000040 /* SharedMediaStoreTests.swift */; };
 		AD0000000000000000000033 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000034 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -94,6 +95,7 @@
 		AC0000000000000000000031 /* MagnetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagnetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnetsDeepLinkTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000033 /* WidgetPushStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPushStateTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000040 /* SharedMediaStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedMediaStoreTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000034 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -220,6 +222,7 @@
 			children = (
 				AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */,
 				AC0000000000000000000033 /* WidgetPushStateTests.swift */,
+				AC0000000000000000000040 /* SharedMediaStoreTests.swift */,
 			);
 			path = MagnetsTests;
 			sourceTree = "<group>";
@@ -393,6 +396,7 @@
 			files = (
 				AD0000000000000000000031 /* MagnetsDeepLinkTests.swift in Sources */,
 				AD0000000000000000000032 /* WidgetPushStateTests.swift in Sources */,
+				AD0000000000000000000040 /* SharedMediaStoreTests.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
