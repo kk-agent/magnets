@@ -68,4 +68,21 @@ extension Magnet {
         let alphabet = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
         return String((0..<8).map { _ in alphabet.randomElement() ?? "M" })
     }
+
+    /// Generate an invite code guaranteed unique among all existing Magnets in the given context.
+    static func makeUniqueInviteCode(in context: ModelContext) throws -> String {
+        let existingCodes = Set(
+            try context.fetch(FetchDescriptor<Magnet>()).map {
+                $0.inviteCode.uppercased()
+            }
+        )
+        for _ in 0..<100 {
+            let candidate = makeInviteCode()
+            if !existingCodes.contains(candidate.uppercased()) {
+                return candidate
+            }
+        }
+        // Effectively unreachable with 32^8 ≈ 1.1T possibilities, but fail explicitly.
+        return makeInviteCode()
+    }
 }

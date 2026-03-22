@@ -114,13 +114,14 @@ struct CreateMagnetView: View {
 
     @MainActor
     private func createMagnet() {
-        let magnet = Magnet(name: trimmedName)
-        let owner = MagnetMember(displayName: "You", role: .owner, magnet: magnet)
-
-        modelContext.insert(magnet)
-        modelContext.insert(owner)
-
         do {
+            let uniqueCode = try Magnet.makeUniqueInviteCode(in: modelContext)
+            let magnet = Magnet(name: trimmedName, inviteCode: uniqueCode)
+            let owner = MagnetMember(displayName: "You", role: .owner, magnet: magnet)
+
+            modelContext.insert(magnet)
+            modelContext.insert(owner)
+
             try modelContext.save()
             WidgetCenter.shared.reloadAllTimelines()
             dismiss()
@@ -128,7 +129,7 @@ struct CreateMagnetView: View {
             #if DEBUG
             assertionFailure("Unable to save magnet: \(error)")
             #endif
-            errorMessage = "We couldn’t save that Magnet. Please try again."
+            errorMessage = "We couldn't save that Magnet. Please try again."
         }
     }
 }
