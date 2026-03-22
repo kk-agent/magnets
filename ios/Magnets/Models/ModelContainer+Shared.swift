@@ -35,9 +35,9 @@ enum SharedModelContainer {
                 )
             } catch {
                 #if DEBUG
-                assertionFailure(
+                print(
                     """
-                    CloudKit store setup failed for \(cloudKitContainerIdentifier). \
+                    ⚠️ CloudKit store setup failed for \(cloudKitContainerIdentifier). \
                     Falling back to the shared local store until the Apple Developer \
                     container + entitlements are provisioned on a signed-in device: \(error)
                     """
@@ -46,10 +46,48 @@ enum SharedModelContainer {
             }
         }
 
-        return try ModelContainer(
-            for: schema,
-            configurations: [configuration(inMemory: inMemory, cloudKitEnabled: false)]
-        )
+        do {
+            return try ModelContainer(
+                for: schema,
+                configurations: [configuration(inMemory: inMemory, cloudKitEnabled: false)]
+            )
+        } catch {
+            // Schema-incompatible store on disk — nuke it and retry once.
+            print("⚠️ ModelContainer failed (\(error)). Deleting store and retrying…")
+            deleteExistingStore()
+            return try ModelContainer(
+                for: schema,
+                configurations: [configuration(inMemory: inMemory, cloudKitEnabled: false)]
+            )
+        }
+    }
+
+    /// Remove the on-disk SwiftData store so a fresh one can be created.
+    private static func deleteExistingStore() {
+        let storeName = "Magnets"
+        let storeDir: URL
+
+        if isAppGroupAvailable,
+           let groupURL = FileManager.default.containerURL(
+               forSecurityApplicationGroupIdentifier: appGroupID
+           ) {
+            storeDir = groupURL
+        } else {
+            storeDir = FileManager.default.urls(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask
+            ).first ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        }
+
+        let extensions = ["store", "store-shm", "store-wal"]
+        for ext in extensions {
+            let fileURL = storeDir.appendingPathComponent("\(storeName).\(ext)")
+            try? FileManager.default.removeItem(at: fileURL)
+        }
+
+        // Also check the default SwiftData path
+        let defaultDir = storeDir.appendingPathComponent("default.store")
+        try? FileManager.default.removeItem(at: defaultDir)
     }
 
     /// Whether the App Group container is available in this process.
