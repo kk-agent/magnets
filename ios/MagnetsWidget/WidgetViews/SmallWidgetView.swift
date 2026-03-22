@@ -50,7 +50,10 @@ struct SmallWidgetView: View {
                 .padding(14)
             } else {
                 VStack(alignment: .leading, spacing: 10) {
-                    Image(systemName: "sparkles.rectangle.stack")
+                    WidgetSymbolImage(
+                        primarySystemName: "sparkles.rectangle.stack",
+                        fallbackSystemName: "sparkles"
+                    )
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.white)
 

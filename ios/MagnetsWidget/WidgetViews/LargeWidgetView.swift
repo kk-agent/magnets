@@ -20,7 +20,10 @@ struct LargeWidgetView: View {
 
                 Spacer()
 
-                Image(systemName: "sparkles.rectangle.stack.fill")
+                WidgetSymbolImage(
+                    primarySystemName: "sparkles.rectangle.stack.fill",
+                    fallbackSystemName: "sparkles"
+                )
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.white)
                     .padding(10)
@@ -71,14 +74,16 @@ struct LargeWidgetView: View {
                 magnetID: magnetID,
                 quickMessage: "👋 Wave",
                 title: "Wave",
-                systemImage: "hand.wave.fill"
+                systemImage: "hand.wave.fill",
+                fallbackSystemImage: "hand.raised.fill"
             )
 
             quickPostButton(
                 magnetID: magnetID,
                 quickMessage: "❤️ Sent love",
-                title: "Send love",
-                systemImage: "heart.fill"
+                title: "Love",
+                systemImage: "heart.fill",
+                fallbackSystemImage: "heart"
             )
         }
     }
@@ -87,29 +92,30 @@ struct LargeWidgetView: View {
         magnetID: UUID,
         quickMessage: String,
         title: String,
-        systemImage: String
+        systemImage: String,
+        fallbackSystemImage: String
     ) -> some View {
         Button(intent: PostToMagnetIntent(magnetID: magnetID.uuidString, quickMessage: quickMessage)) {
             HStack(spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.16))
 
-                    Text("Post")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.68))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-
-                Spacer(minLength: 8)
-
-                Image(systemName: systemImage)
+                    WidgetSymbolImage(
+                        primarySystemName: systemImage,
+                        fallbackSystemName: fallbackSystemImage
+                    )
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.88))
+                    .foregroundStyle(.white)
+                }
+                .frame(width: 30, height: 30)
+
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 11)
@@ -167,7 +173,10 @@ private struct LargeFeedRow: View {
                     )
                 )
                 .overlay {
-                    Image(systemName: post.contentType == .aiGenerated ? "sparkles" : "text.bubble.fill")
+                    WidgetSymbolImage(
+                        primarySystemName: post.contentType == .aiGenerated ? "sparkles" : "text.bubble.fill",
+                        fallbackSystemName: post.contentType == .aiGenerated ? "star.fill" : "bubble.left.fill"
+                    )
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(.white)
                 }

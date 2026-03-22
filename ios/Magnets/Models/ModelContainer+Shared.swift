@@ -4,6 +4,7 @@ import Foundation
 import ImageIO
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 import WidgetKit
 
 enum SharedModelContainer {
@@ -118,7 +119,8 @@ enum SharedMediaStore {
             attributes: nil
         )
 
-        let fileName = "\(UUID().uuidString.lowercased()).jpg"
+        let fileExtension = preferredImageFileExtension(for: data)
+        let fileName = "\(UUID().uuidString.lowercased()).\(fileExtension)"
         let fileURL = directoryURL.appendingPathComponent(fileName, isDirectory: false)
 
         try data.write(to: fileURL, options: .atomic)
@@ -169,6 +171,18 @@ enum SharedMediaStore {
     private static func cacheKey(for relativePath: String, maxPixelSize: Int?) -> NSString {
         let suffix = maxPixelSize.map { "thumb-\($0)" } ?? "full"
         return "\(relativePath)|\(suffix)" as NSString
+    }
+
+    private static func preferredImageFileExtension(for data: Data) -> String {
+        guard
+            let imageSource = CGImageSourceCreateWithData(data as CFData, nil),
+            let typeIdentifier = CGImageSourceGetType(imageSource),
+            let fileExtension = UTType(typeIdentifier as String)?.preferredFilenameExtension
+        else {
+            return "jpg"
+        }
+
+        return fileExtension.lowercased()
     }
 }
 

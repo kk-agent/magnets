@@ -1,5 +1,8 @@
 import SwiftUI
 import WidgetKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct MagnetsWidget: Widget {
     private let kind = "MagnetsWidget"
@@ -33,5 +36,27 @@ private struct MagnetsWidgetEntryView: View {
             }
         }
         .widgetURL(entry.destinationURL)
+    }
+}
+
+struct WidgetSymbolImage: View {
+    let primarySystemName: String
+    let fallbackSystemName: String
+
+    var body: some View {
+        Image(systemName: resolvedSystemName)
+    }
+
+    private var resolvedSystemName: String {
+#if canImport(UIKit)
+        if UIImage(systemName: primarySystemName) != nil {
+            return primarySystemName
+        }
+
+        if UIImage(systemName: fallbackSystemName) != nil {
+            return fallbackSystemName
+        }
+#endif
+        return fallbackSystemName
     }
 }

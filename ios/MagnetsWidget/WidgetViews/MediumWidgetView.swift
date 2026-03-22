@@ -25,9 +25,16 @@ struct MediumWidgetView: View {
                     Spacer(minLength: 0)
 
                     HStack {
-                        Label(post.authorName, systemImage: "person.crop.circle.fill")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white.opacity(0.78))
+                        HStack(spacing: 6) {
+                            WidgetSymbolImage(
+                                primarySystemName: "person.crop.circle.fill",
+                                fallbackSystemName: "person.fill"
+                            )
+                            Text(post.authorName)
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.78))
+                        .lineLimit(1)
 
                         Spacer()
 
@@ -66,7 +73,10 @@ struct MediumWidgetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         } else if let post = entry.latestPost {
             VStack(alignment: .leading, spacing: 10) {
-                Image(systemName: post.contentType == .aiGenerated ? "sparkles" : "quote.bubble.fill")
+                WidgetSymbolImage(
+                    primarySystemName: post.contentType == .aiGenerated ? "sparkles" : "quote.bubble.fill",
+                    fallbackSystemName: post.contentType == .aiGenerated ? "star.fill" : "bubble.left.fill"
+                )
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.white)
 
@@ -94,7 +104,10 @@ struct MediumWidgetView: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.white.opacity(0.12))
                 .overlay {
-                    Image(systemName: "sparkles.rectangle.stack")
+                    WidgetSymbolImage(
+                        primarySystemName: "sparkles.rectangle.stack",
+                        fallbackSystemName: "sparkles"
+                    )
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.white)
                 }
@@ -115,20 +128,29 @@ struct MediumWidgetView: View {
     private func quickPostButton(for magnetID: UUID) -> some View {
         Button(intent: PostToMagnetIntent(magnetID: magnetID.uuidString, quickMessage: "👋 Wave")) {
             HStack(spacing: 10) {
-                Text("Quick post")
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.16))
+
+                    WidgetSymbolImage(
+                        primarySystemName: "hand.wave.fill",
+                        fallbackSystemName: "hand.raised.fill"
+                    )
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                }
+                .frame(width: 28, height: 28)
+
+                Text("Wave")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                Spacer(minLength: 8)
-
-                Image(systemName: "paperplane.fill")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.88))
+                    .minimumScaleFactor(0.85)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
             .background(.white.opacity(0.14), in: Capsule())
         }
         .buttonStyle(.plain)
