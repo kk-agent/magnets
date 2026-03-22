@@ -52,14 +52,32 @@ enum SharedModelContainer {
         )
     }
 
-    static var groupContainerURL: URL {
-        guard let url = FileManager.default.containerURL(
+    /// Whether the App Group container is available in this process.
+    /// Returns `false` for unsigned Simulator test hosts and CI builds.
+    static var isAppGroupAvailable: Bool {
+        FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: appGroupID
-        ) else {
-            fatalError("Missing App Group container for \(appGroupID)")
+        ) != nil
+    }
+
+    static var groupContainerURL: URL {
+        if let url = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: appGroupID
+        ) {
+            return url
         }
 
-        return url
+        // Fallback for Simulator test hosts without the App Group entitlement.
+        // Uses the app's Documents directory so the rest of the code can proceed
+        // without crashing; data won't be shared with the widget in this mode.
+        #if DEBUG
+        let fallback = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("MagnetsFallbackGroup", isDirectory: true)
+        try? FileManager.default.createDirectory(at: fallback, withIntermediateDirectories: true)
+        return fallback
+        #else
+        fatalError("Missing App Group container for \(appGroupID)")
+        #endif
     }
 
     private static func configuration(
@@ -75,10 +93,12 @@ enum SharedModelContainer {
             )
         }
 
+        let groupSetting: ModelConfiguration.GroupContainer =
+            isAppGroupAvailable ? .identifier(appGroupID) : .automatic
         return ModelConfiguration(
             "Magnets",
             schema: schema,
-            groupContainer: .identifier(appGroupID),
+            groupContainer: groupSetting,
             // SwiftData reads the actual iCloud container binding from entitlements.
             // The app + widget both need Apple Developer provisioning for
             // iCloud.com.groupthinking.magnets before device sync/sharing is real.
