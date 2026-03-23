@@ -1,5 +1,10 @@
 import SwiftUI
 
+private enum SettingsViewLayoutMetrics {
+    static let maxContentWidth: CGFloat = 680
+    static let bottomScrollClearance: CGFloat = 16
+}
+
 struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
 
@@ -19,10 +24,13 @@ struct SettingsView: View {
                     aboutCard
                 }
                 .padding(.horizontal, 20)
-                .frame(maxWidth: 600)
-                .frame(maxWidth: .infinity)
                 .padding(.top, 20)
-                .padding(.bottom, 40)
+                .frame(maxWidth: SettingsViewLayoutMetrics.maxContentWidth)
+                .frame(maxWidth: .infinity)
+            }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear
+                    .frame(height: SettingsViewLayoutMetrics.bottomScrollClearance)
             }
             .background(backgroundView)
             .navigationTitle("Settings")

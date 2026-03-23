@@ -2,6 +2,11 @@ import SwiftData
 import SwiftUI
 import UIKit
 
+private enum HomeViewLayoutMetrics {
+    static let maxContentWidth: CGFloat = 680
+    static let bottomScrollClearance: CGFloat = 16
+}
+
 struct HomeView: View {
     @Environment(AppRouter.self) private var appRouter
     @Environment(\.scenePhase) private var scenePhase
@@ -38,10 +43,13 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .frame(maxWidth: 600)
-                .frame(maxWidth: .infinity)
                 .padding(.top, 20)
-                .padding(.bottom, 40)
+                .frame(maxWidth: HomeViewLayoutMetrics.maxContentWidth)
+                .frame(maxWidth: .infinity)
+            }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear
+                    .frame(height: HomeViewLayoutMetrics.bottomScrollClearance)
             }
             .scrollIndicators(.hidden)
             .background(backgroundView)
@@ -559,7 +567,7 @@ private struct JoinMagnetView: View {
                 }
             }
             .padding(24)
-            .frame(maxWidth: 600)
+            .frame(maxWidth: HomeViewLayoutMetrics.maxContentWidth)
             .frame(maxWidth: .infinity)
         }
         .background(

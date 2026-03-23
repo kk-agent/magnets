@@ -9,6 +9,10 @@ import WidgetKit
 import FoundationModels
 #endif
 
+private enum MagnetDetailLayoutMetrics {
+    static let maxContentWidth: CGFloat = 680
+}
+
 struct MagnetDetailView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -58,7 +62,7 @@ struct MagnetDetailView: View {
                 }
             }
             .padding(.horizontal, 20)
-            .frame(maxWidth: 600)
+            .frame(maxWidth: MagnetDetailLayoutMetrics.maxContentWidth)
             .frame(maxWidth: .infinity)
             .padding(.top, 20)
             .padding(.bottom, 20)
@@ -283,6 +287,8 @@ struct MagnetDetailView: View {
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 12)
+        .frame(maxWidth: MagnetDetailLayoutMetrics.maxContentWidth)
+        .frame(maxWidth: .infinity)
         .background(.thinMaterial)
     }
 
@@ -636,7 +642,7 @@ private struct AIComposeSheet: View {
                     }
                 }
                 .padding(24)
-                .frame(maxWidth: 600)
+                .frame(maxWidth: MagnetDetailLayoutMetrics.maxContentWidth)
                 .frame(maxWidth: .infinity)
             }
             .background(
@@ -901,7 +907,7 @@ private struct InviteView: View {
                     actionsCard
                 }
                 .padding(24)
-                .frame(maxWidth: 600)
+                .frame(maxWidth: MagnetDetailLayoutMetrics.maxContentWidth)
                 .frame(maxWidth: .infinity)
             }
             .background(

@@ -1,6 +1,12 @@
+import OSLog
 import SwiftData
 import SwiftUI
 import WidgetKit
+
+private let createMagnetLogger = Logger(
+    subsystem: Bundle.main.bundleIdentifier ?? "Magnets",
+    category: "CreateMagnetView"
+)
 
 struct CreateMagnetView: View {
     @Environment(\.dismiss) private var dismiss
@@ -58,7 +64,7 @@ struct CreateMagnetView: View {
                     Spacer()
                 }
                 .padding(24)
-                .frame(maxWidth: 600)
+                .frame(maxWidth: 680)
                 .frame(maxWidth: .infinity)
             }
             .navigationTitle("Create")
@@ -128,9 +134,9 @@ struct CreateMagnetView: View {
             WidgetRefreshCoordinator.shared.requestRefresh()
             dismiss()
         } catch {
-            #if DEBUG
-            print("⚠️ Unable to save magnet: \(error)")
-            #endif
+            createMagnetLogger.error(
+                "Unable to save magnet: \(error.localizedDescription, privacy: .public)"
+            )
             errorMessage = "We couldn't save that Magnet. Please try again."
         }
     }
