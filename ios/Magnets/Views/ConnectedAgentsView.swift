@@ -83,6 +83,9 @@ private struct AgentRowView: View {
     let onDelete: () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @State private var isRunning = false
+    @State private var runResult: String?
+    @State private var runError: String?
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
@@ -139,6 +142,22 @@ private struct AgentRowView: View {
                         try? modelContext.save()
                     }
 
+                Button {
+                    runAgentNow()
+                } label: {
+                    if isRunning {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    } else {
+                        Image(systemName: "play.fill")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Color(hex: "#4B43E8"))
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(isRunning || !agent.isEnabled)
+                .accessibilityLabel("Run agent now")
+
                 Button(role: .destructive) {
                     onDelete()
                 } label: {
@@ -151,6 +170,55 @@ private struct AgentRowView: View {
         }
         .padding(16)
         .background(Color.white.opacity(0.5), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(alignment: .bottom) {
+            if let runResult {
+                Text("✓ \(runResult)")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Color(hex: "#0AB8A2"))
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .offset(y: 16)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+            if let runError {
+                Text("⚠ \(runError)")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Color(hex: "#FF6B6B"))
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .offset(y: 16)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .padding(.bottom, (runResult != nil || runError != nil) ? 12 : 0)
+        .animation(.easeInOut(duration: 0.3), value: runResult)
+        .animation(.easeInOut(duration: 0.3), value: runError)
+    }
+
+    private func runAgentNow() {
+        isRunning = true
+        runResult = nil
+        runError = nil
+
+        Task {
+            do {
+                let text = try await AgentPostService.runAgentLocally(agent, in: modelContext)
+                let preview = String(text.prefix(60))
+                runResult = preview
+                // Auto-dismiss after 4 seconds
+                try? await Task.sleep(for: .seconds(4))
+                runResult = nil
+            } catch {
+                runError = error.localizedDescription
+                try? await Task.sleep(for: .seconds(4))
+                runError = nil
+            }
+            isRunning = false
+        }
     }
 }
 

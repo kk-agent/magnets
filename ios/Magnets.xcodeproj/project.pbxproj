@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FF7977815FD14388B1FDD80E /* AgentPostServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FE905D71DA4E0B82A94849 /* AgentPostServiceTests.swift */; };
+		D257FA5F330C43AF8173F66A /* AgentPostService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D402C198C24E719A0418D5 /* AgentPostService.swift */; };
 		AD0000000000000000000011 /* MagnetsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000011 /* MagnetsApp.swift */; };
 		AD0000000000000000000012 /* Magnet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000012 /* Magnet.swift */; };
 		AD0000000000000000000013 /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000013 /* Post.swift */; };
@@ -78,6 +80,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		51FE905D71DA4E0B82A94849 /* AgentPostServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPostServiceTests.swift; sourceTree = "<group>"; };
+		82D402C198C24E719A0418D5 /* AgentPostService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPostService.swift; sourceTree = "<group>"; };
 		AC0000000000000000000001 /* Magnets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Magnets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC0000000000000000000002 /* MagnetsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MagnetsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC0000000000000000000011 /* MagnetsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnetsApp.swift; sourceTree = "<group>"; };
@@ -183,6 +187,7 @@
 				AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */,
 				AC0000000000000000000052 /* AICompose.swift */,
 				AC0000000000000000000060 /* AgentConnection.swift */,
+				82D402C198C24E719A0418D5 /* AgentPostService.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -252,6 +257,7 @@
 				B84CF6B62F712A37003A52E4 /* WidgetPushStateStoreTests.swift */,
 				B84CF6B82F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift */,
 				AC0000000000000000000061 /* AgentConnectionTests.swift */,
+				51FE905D71DA4E0B82A94849 /* AgentPostServiceTests.swift */,
 			);
 			path = MagnetsTests;
 			sourceTree = "<group>";
@@ -404,6 +410,7 @@
 				AD0000000000000000000050 /* WidgetRefreshCoordinator.swift in Sources */,
 				AD0000000000000000000053 /* AICompose.swift in Sources */,
 				AD0000000000000000000060 /* AgentConnection.swift in Sources */,
+				D257FA5F330C43AF8173F66A /* AgentPostService.swift in Sources */,
 				AD0000000000000000000070 /* ConnectedAgentsView.swift in Sources */,
 			);
 		};
@@ -437,6 +444,7 @@
 				AD0000000000000000000054 /* AIComposeTests.swift in Sources */,
 				B84CF6B72F712A38003A52E4 /* WidgetPushStateStoreTests.swift in Sources */,
 				AD0000000000000000000062 /* AgentConnectionTests.swift in Sources */,
+				FF7977815FD14388B1FDD80E /* AgentPostServiceTests.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
