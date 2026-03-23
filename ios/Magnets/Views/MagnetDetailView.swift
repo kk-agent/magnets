@@ -24,6 +24,7 @@ struct MagnetDetailView: View {
     @State private var isSaving = false
     @State private var isPresentingInviteSheet = false
     @State private var isPresentingAIComposeSheet = false
+    @State private var isPresentingAgentsSheet = false
     @State private var draftSource: ComposerDraftSource = .manual
 
     private var sortedPosts: [Post] {
@@ -73,10 +74,18 @@ struct MagnetDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    isPresentingInviteSheet = true
-                } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
+                HStack(spacing: 4) {
+                    Button {
+                        isPresentingAgentsSheet = true
+                    } label: {
+                        Label("Agents", systemImage: "sparkles")
+                    }
+
+                    Button {
+                        isPresentingInviteSheet = true
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
                 }
             }
         }
@@ -89,6 +98,9 @@ struct MagnetDetailView: View {
                 draftSource = .aiGenerated
                 composerMessage = "AI draft ready. Give it a quick edit, then send."
             }
+        }
+        .sheet(isPresented: $isPresentingAgentsSheet) {
+            MagnetAgentsSheet(magnet: magnet)
         }
         .sheet(isPresented: $isPresentingInviteSheet) {
             InviteView(magnet: magnet)

@@ -139,18 +139,7 @@ struct SettingsView: View {
 
     private var connectedAgentsCard: some View {
         glassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Connected Agents")
-                    .font(.title3.weight(.bold))
-
-                Label("No agents connected", systemImage: "sparkles")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(Color(hex: "#4B43E8"))
-
-                Text("Agent posting is coming soon. You'll be able to connect a helper to a Magnet for scheduled updates, daily briefs, and other automatic posts.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+            ConnectedAgentsListView()
         }
     }
 

@@ -42,6 +42,7 @@
 		AD0000000000000000000054 /* AIComposeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000053 /* AIComposeTests.swift */; };
 		AD0000000000000000000060 /* AgentConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000060 /* AgentConnection.swift */; };
 		AD0000000000000000000061 /* AgentConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000060 /* AgentConnection.swift */; };
+		AD0000000000000000000070 /* ConnectedAgentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000070 /* ConnectedAgentsView.swift */; };
 		B84CF6B72F712A38003A52E4 /* WidgetPushStateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84CF6B62F712A37003A52E4 /* WidgetPushStateStoreTests.swift */; };
 		B84CF6B92F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84CF6B82F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift */; };
 /* End PBXBuildFile section */
@@ -111,6 +112,7 @@
 		AC0000000000000000000052 /* AICompose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICompose.swift; sourceTree = "<group>"; };
 		AC0000000000000000000053 /* AIComposeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIComposeTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000060 /* AgentConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentConnection.swift; sourceTree = "<group>"; };
+		AC0000000000000000000070 /* ConnectedAgentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedAgentsView.swift; sourceTree = "<group>"; };
 		B84CF6B62F712A37003A52E4 /* WidgetPushStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPushStateStoreTests.swift; sourceTree = "<group>"; };
 		B84CF6B82F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnetsDeepLinkAdditionalTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -191,6 +193,7 @@
 				AC0000000000000000000018 /* CreateMagnetView.swift */,
 				AC0000000000000000000019 /* PostRowView.swift */,
 				AC000000000000000000001A /* SettingsView.swift */,
+				AC0000000000000000000070 /* ConnectedAgentsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -398,6 +401,7 @@
 				AD0000000000000000000050 /* WidgetRefreshCoordinator.swift in Sources */,
 				AD0000000000000000000053 /* AICompose.swift in Sources */,
 				AD0000000000000000000060 /* AgentConnection.swift in Sources */,
+				AD0000000000000000000070 /* ConnectedAgentsView.swift in Sources */,
 			);
 		};
 		AE0000000000000000000005 /* Sources */ = {
