@@ -46,10 +46,10 @@
 - [ ] Add device-observable diagnostics for widget push + sync failures
 
 ## Phase 5 — Market-competitive 2026 layer
-- [ ] Run a competitive scan on 2026 private social / memory / family / relationship widget apps
-- [ ] Distill 3–5 differentiators that Magnets can plausibly win on
-- [ ] Convert differentiators into an execution roadmap
-- [ ] Tighten App Store / launch positioning
+- [x] Run a competitive scan on 2026 private social / memory / family / relationship widget apps → `docs/competitive-analysis-2026.md` (commit `a4333f8`)
+- [x] Distill 3–5 differentiators that Magnets can plausibly win on → 5 differentiators: AI Agents, On-Device AI Compose, Group-Native, Widget as Dashboard, Privacy-First
+- [x] Convert differentiators into an execution roadmap → P0/P1/P2 priority table in competitive analysis
+- [x] Tighten App Store / launch positioning → Recommended tagline, subtitle, keywords, positioning statement
 - [ ] Transfer repo to `groupthinking` when launch/admin timing is right
 
 ## Subagent workstreams
