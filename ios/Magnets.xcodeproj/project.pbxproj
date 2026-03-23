@@ -33,13 +33,15 @@
 		AD0000000000000000000030 /* MagnetsWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000002 /* MagnetsWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AD0000000000000000000031 /* MagnetsDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */; };
 		AD0000000000000000000032 /* WidgetPushStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000033 /* WidgetPushStateTests.swift */; };
+		AD0000000000000000000033 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000034 /* XCTest.framework */; };
 		AD0000000000000000000040 /* SharedMediaStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000040 /* SharedMediaStoreTests.swift */; };
 		AD0000000000000000000050 /* WidgetRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */; };
 		AD0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */; };
 		AD0000000000000000000052 /* WidgetRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */; };
 		AD0000000000000000000053 /* AICompose.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000052 /* AICompose.swift */; };
 		AD0000000000000000000054 /* AIComposeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000053 /* AIComposeTests.swift */; };
-		AD0000000000000000000033 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000034 /* XCTest.framework */; };
+		B84CF6B72F712A38003A52E4 /* WidgetPushStateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84CF6B62F712A37003A52E4 /* WidgetPushStateStoreTests.swift */; };
+		B84CF6B92F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B84CF6B82F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,12 +102,14 @@
 		AC0000000000000000000031 /* MagnetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagnetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnetsDeepLinkTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000033 /* WidgetPushStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPushStateTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000034 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		AC0000000000000000000040 /* SharedMediaStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedMediaStoreTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshCoordinator.swift; sourceTree = "<group>"; };
 		AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshCoordinatorTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000052 /* AICompose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICompose.swift; sourceTree = "<group>"; };
 		AC0000000000000000000053 /* AIComposeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIComposeTests.swift; sourceTree = "<group>"; };
-		AC0000000000000000000034 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		B84CF6B62F712A37003A52E4 /* WidgetPushStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPushStateStoreTests.swift; sourceTree = "<group>"; };
+		B84CF6B82F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnetsDeepLinkAdditionalTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -236,6 +240,8 @@
 				AC0000000000000000000040 /* SharedMediaStoreTests.swift */,
 				AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */,
 				AC0000000000000000000053 /* AIComposeTests.swift */,
+				B84CF6B62F712A37003A52E4 /* WidgetPushStateStoreTests.swift */,
+				B84CF6B82F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift */,
 			);
 			path = MagnetsTests;
 			sourceTree = "<group>";
@@ -411,10 +417,12 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				AD0000000000000000000031 /* MagnetsDeepLinkTests.swift in Sources */,
+				B84CF6B92F712A3E003A52E4 /* MagnetsDeepLinkAdditionalTests.swift in Sources */,
 				AD0000000000000000000032 /* WidgetPushStateTests.swift in Sources */,
 				AD0000000000000000000040 /* SharedMediaStoreTests.swift in Sources */,
 				AD0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift in Sources */,
 				AD0000000000000000000054 /* AIComposeTests.swift in Sources */,
+				B84CF6B72F712A38003A52E4 /* WidgetPushStateStoreTests.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
