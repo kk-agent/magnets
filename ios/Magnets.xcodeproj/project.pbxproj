@@ -37,6 +37,8 @@
 		AD0000000000000000000050 /* WidgetRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */; };
 		AD0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */; };
 		AD0000000000000000000052 /* WidgetRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */; };
+		AD0000000000000000000053 /* AICompose.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000052 /* AICompose.swift */; };
+		AD0000000000000000000054 /* AIComposeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000053 /* AIComposeTests.swift */; };
 		AD0000000000000000000033 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000034 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -101,6 +103,8 @@
 		AC0000000000000000000040 /* SharedMediaStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedMediaStoreTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshCoordinator.swift; sourceTree = "<group>"; };
 		AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshCoordinatorTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000052 /* AICompose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICompose.swift; sourceTree = "<group>"; };
+		AC0000000000000000000053 /* AIComposeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIComposeTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000034 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -166,6 +170,7 @@
 				AC0000000000000000000014 /* MagnetMember.swift */,
 				AC0000000000000000000015 /* ModelContainer+Shared.swift */,
 				AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */,
+				AC0000000000000000000052 /* AICompose.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -230,6 +235,7 @@
 				AC0000000000000000000033 /* WidgetPushStateTests.swift */,
 				AC0000000000000000000040 /* SharedMediaStoreTests.swift */,
 				AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */,
+				AC0000000000000000000053 /* AIComposeTests.swift */,
 			);
 			path = MagnetsTests;
 			sourceTree = "<group>";
@@ -380,6 +386,7 @@
 				AD0000000000000000000019 /* PostRowView.swift in Sources */,
 				AD000000000000000000001A /* SettingsView.swift in Sources */,
 				AD0000000000000000000050 /* WidgetRefreshCoordinator.swift in Sources */,
+				AD0000000000000000000053 /* AICompose.swift in Sources */,
 			);
 		};
 		AE0000000000000000000005 /* Sources */ = {
@@ -407,6 +414,7 @@
 				AD0000000000000000000032 /* WidgetPushStateTests.swift in Sources */,
 				AD0000000000000000000040 /* SharedMediaStoreTests.swift in Sources */,
 				AD0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift in Sources */,
+				AD0000000000000000000054 /* AIComposeTests.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
