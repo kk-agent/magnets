@@ -14,6 +14,9 @@ final class Magnet {
     @Relationship(deleteRule: .cascade, inverse: \MagnetMember.magnet)
     var members: [MagnetMember] = []
 
+    @Relationship(deleteRule: .cascade, inverse: \AgentConnection.magnet)
+    var agents: [AgentConnection] = []
+
     init(
         id: UUID = UUID(),
         name: String,

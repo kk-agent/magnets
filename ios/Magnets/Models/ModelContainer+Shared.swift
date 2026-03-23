@@ -14,6 +14,7 @@ enum SharedModelContainer {
         Magnet.self,
         Post.self,
         MagnetMember.self,
+        AgentConnection.self,
     ])
 
     static let shared: ModelContainer = {
