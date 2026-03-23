@@ -38,7 +38,8 @@
 ## Phase 4 — Product capability lift
 - [x] Define remote join/sync strategy → `docs/remote-join-sync-strategy.md` (commit `2a48be6`): hybrid CloudKit (person-to-person) + Supabase (agents + invite lookup)
 - [x] Define Connected Agents data model (`AgentConnection` SwiftData, 4 types, 3 schedules) — commit `f67b47c`
-- [ ] Build Connected Agents UI: list view in Settings, add/remove/toggle per Magnet
+- [x] Build Connected Agents UI: list view in Settings, add/remove/toggle per Magnet (commit `cf65c28`)
+- [x] Add AgentConnection tests: enums, defaults, effectivePrompt, scheduleDescription, relationships, cascade delete (16 tests, commit `4fa3fb0`)
 - [ ] Wire agent posting trigger (cron → Supabase agent-post → APNs)
 - [ ] Define agent posting flows that feel useful, not gimmicky
 - [ ] Strengthen invite/join/share UX
