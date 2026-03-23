@@ -248,3 +248,49 @@
 - 15-min timeout per agent task — escalate if exceeded
 - GitHub Actions chain auto-assigns next issue on PR merge
 - Hayden gets Telegram ping on completion OR stall
+
+---
+
+## Status Update — 2026-03-22
+
+### Session Work (2026-03-22)
+- **Crash fix:** App was crashing on launch with EXC_BREAKPOINT (SIGTRAP) in SwiftData `ModelContainer` init
+  - Root cause: `assertionFailure()` in CloudKit fallback path kills DEBUG builds before the local-store fallback runs
+  - Fix: replaced `assertionFailure` with `print()` in `ModelContainer+Shared.swift`
+  - Added store nuke-and-retry: if the on-disk schema is incompatible, delete the store files and recreate
+  - Removed matching `assertionFailure` in `CreateMagnetView.swift` (same crash pattern)
+- **Tab bar clipping:** Reduced oversized bottom padding (120/140pt → 40/20pt) in HomeView, SettingsView, MagnetDetailView
+- **iPad/landscape layout:** Added `.frame(maxWidth: 600).frame(maxWidth: .infinity)` centering to all main content areas (HomeView, SettingsView, MagnetDetailView, CreateMagnetView, JoinMagnetView, AIComposeSheet, InviteView)
+- **Gitignore cleanup:** Excluded xcuserdata/xcuserstate from repo
+- **All changes built, tested on simulator (iPhone 17 Pro), committed and pushed to main**
+
+### Commits (2026-03-22)
+- `9707787` — fix: replace assertionFailure with print fallback, add store nuke-and-retry on schema mismatch
+- `5a5d903` — chore: gitignore xcuserdata/xcuserstate
+- `5eb1669` — fix: tab bar clipping, iPad max-width constraints, remove assertionFailure in CreateMagnetView
+
+### What's actually done
+- Phase 1 ✅ (Foundation)
+- Phase 2A ✅ (Widget Push)
+- Phase 2B ✅ (CloudKit Integration)
+- Phase 2C ✅ (Sharing & Invites)
+- Phase 2D ✅ (Interactive Widgets)
+- Phase 3A ✅ (Foundation Models / On-Device AI)
+- PR #7 open (production readiness — signing fix)
+- Spine Product Analysis delivered (docs/spine-product-analysis.md)
+- Privacy policy drafted (docs/privacy-policy.md)
+- App Store listing drafted (docs/app-store-listing.md)
+- Backend strategy documented (docs/backend-supabase-agent-post.md)
+- Crash fix + UI polish pass landed (2026-03-22)
+
+### What's available (NOT blocked)
+- Apple Developer account: Team 6DR32PXU4V (Hayden Garvey)
+- APNs auth key: AuthKey_U43LDC7HYX.p8 (Key ID: U43LDC7HYX)
+- DEVELOPMENT_TEAM set in Xcode project
+- Chrome Profile 9 (connectkk11@gmail.com) for web auth
+- Simulator: iPhone 17 Pro (67810A99) — verified working, app installs and launches clean
+
+### What's actually next
+- Phase 3B: Agent webhook (Supabase Edge Function + APNs push)
+- Phase 3C: Agent management UI
+- Phase 4: Design polish + App Store submission
