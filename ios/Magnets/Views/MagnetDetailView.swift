@@ -58,8 +58,10 @@ struct MagnetDetailView: View {
                 }
             }
             .padding(.horizontal, 20)
+            .frame(maxWidth: 600)
+            .frame(maxWidth: .infinity)
             .padding(.top, 20)
-            .padding(.bottom, 130)
+            .padding(.bottom, 20)
         }
         .scrollIndicators(.hidden)
         .background(backgroundView)
@@ -634,6 +636,8 @@ private struct AIComposeSheet: View {
                     }
                 }
                 .padding(24)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
             }
             .background(
                 LinearGradient(
@@ -897,6 +901,8 @@ private struct InviteView: View {
                     actionsCard
                 }
                 .padding(24)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
             }
             .background(
                 LinearGradient(

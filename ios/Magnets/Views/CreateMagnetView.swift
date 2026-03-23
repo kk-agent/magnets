@@ -58,6 +58,8 @@ struct CreateMagnetView: View {
                     Spacer()
                 }
                 .padding(24)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
             }
             .navigationTitle("Create")
             .navigationBarTitleDisplayMode(.inline)
@@ -127,7 +129,7 @@ struct CreateMagnetView: View {
             dismiss()
         } catch {
             #if DEBUG
-            assertionFailure("Unable to save magnet: \(error)")
+            print("⚠️ Unable to save magnet: \(error)")
             #endif
             errorMessage = "We couldn't save that Magnet. Please try again."
         }

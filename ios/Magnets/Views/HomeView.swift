@@ -38,8 +38,10 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, 20)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
                 .padding(.top, 20)
-                .padding(.bottom, 120)
+                .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
             .background(backgroundView)
@@ -557,6 +559,8 @@ private struct JoinMagnetView: View {
                 }
             }
             .padding(24)
+            .frame(maxWidth: 600)
+            .frame(maxWidth: .infinity)
         }
         .background(
             LinearGradient(

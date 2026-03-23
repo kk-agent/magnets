@@ -19,8 +19,10 @@ struct SettingsView: View {
                     aboutCard
                 }
                 .padding(.horizontal, 20)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
                 .padding(.top, 20)
-                .padding(.bottom, 140)
+                .padding(.bottom, 40)
             }
             .background(backgroundView)
             .navigationTitle("Settings")
