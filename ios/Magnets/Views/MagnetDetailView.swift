@@ -344,7 +344,7 @@ struct MagnetDetailView: View {
             draftText = ""
             selectedPhoto = nil
             draftSource = .manual
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetRefreshCoordinator.shared.requestRefresh()
         } catch {
             composerMessage = "Couldn’t save that post. Try once more."
         }

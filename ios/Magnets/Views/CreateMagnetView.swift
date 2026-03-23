@@ -125,7 +125,7 @@ struct CreateMagnetView: View {
             modelContext.insert(owner)
 
             try modelContext.save()
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetRefreshCoordinator.shared.requestRefresh()
             dismiss()
         } catch {
             #if DEBUG

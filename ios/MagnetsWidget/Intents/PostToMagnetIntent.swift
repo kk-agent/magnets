@@ -56,7 +56,7 @@ struct PostToMagnetIntent: AppIntent {
 
             context.insert(post)
             try context.save()
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetRefreshCoordinator.shared.requestRefresh()
 
             return .result(dialog: IntentDialog("Posted \(trimmedMessage) to \(magnet.name)."))
         } catch {

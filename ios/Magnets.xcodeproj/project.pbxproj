@@ -34,6 +34,9 @@
 		AD0000000000000000000031 /* MagnetsDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */; };
 		AD0000000000000000000032 /* WidgetPushStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000033 /* WidgetPushStateTests.swift */; };
 		AD0000000000000000000040 /* SharedMediaStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000040 /* SharedMediaStoreTests.swift */; };
+		AD0000000000000000000050 /* WidgetRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */; };
+		AD0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */; };
+		AD0000000000000000000052 /* WidgetRefreshCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */; };
 		AD0000000000000000000033 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000034 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -96,6 +99,8 @@
 		AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagnetsDeepLinkTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000033 /* WidgetPushStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPushStateTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000040 /* SharedMediaStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedMediaStoreTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshCoordinator.swift; sourceTree = "<group>"; };
+		AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshCoordinatorTests.swift; sourceTree = "<group>"; };
 		AC0000000000000000000034 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -160,6 +165,7 @@
 				AC0000000000000000000013 /* Post.swift */,
 				AC0000000000000000000014 /* MagnetMember.swift */,
 				AC0000000000000000000015 /* ModelContainer+Shared.swift */,
+				AC0000000000000000000050 /* WidgetRefreshCoordinator.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -223,6 +229,7 @@
 				AC0000000000000000000032 /* MagnetsDeepLinkTests.swift */,
 				AC0000000000000000000033 /* WidgetPushStateTests.swift */,
 				AC0000000000000000000040 /* SharedMediaStoreTests.swift */,
+				AC0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift */,
 			);
 			path = MagnetsTests;
 			sourceTree = "<group>";
@@ -372,6 +379,7 @@
 				AD0000000000000000000018 /* CreateMagnetView.swift in Sources */,
 				AD0000000000000000000019 /* PostRowView.swift in Sources */,
 				AD000000000000000000001A /* SettingsView.swift in Sources */,
+				AD0000000000000000000050 /* WidgetRefreshCoordinator.swift in Sources */,
 			);
 		};
 		AE0000000000000000000005 /* Sources */ = {
@@ -389,6 +397,7 @@
 				AD000000000000000000002A /* MediumWidgetView.swift in Sources */,
 				AD000000000000000000002B /* LargeWidgetView.swift in Sources */,
 				AD000000000000000000002C /* PostToMagnetIntent.swift in Sources */,
+				AD0000000000000000000052 /* WidgetRefreshCoordinator.swift in Sources */,
 			);
 		};
 		AE0000000000000000000008 /* Sources */ = {
@@ -397,6 +406,7 @@
 				AD0000000000000000000031 /* MagnetsDeepLinkTests.swift in Sources */,
 				AD0000000000000000000032 /* WidgetPushStateTests.swift in Sources */,
 				AD0000000000000000000040 /* SharedMediaStoreTests.swift in Sources */,
+				AD0000000000000000000051 /* WidgetRefreshCoordinatorTests.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
